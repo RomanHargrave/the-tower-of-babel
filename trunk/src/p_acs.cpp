@@ -5757,7 +5757,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETFONTDIRECT:
-			DoSetFont (uallong(pc[0]));
+			DoSetFont (uallong(pc[0]) | activeBehavior->GetLibraryID());
 			pc++;
 			break;
 
