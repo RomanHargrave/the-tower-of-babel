@@ -1615,7 +1615,7 @@ void P_CalcHeight (player_t *player)
 
 	if ((player->mo->flags & MF_NOGRAVITY) && !onground)
 	{
-		player->bob = FRACUNIT / 2;
+		player->bob = (FRACUNIT / 2);
 	}
 	else
 	{

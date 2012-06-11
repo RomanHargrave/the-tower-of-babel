@@ -1194,7 +1194,8 @@ void APowerSpeed::DoEffect ()
 	if (P_AproxDistance (Owner->velx, Owner->vely) <= 12*FRACUNIT)
 		return;
 
-	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->x, Owner->y, Owner->z, NO_REPLACE);
+	// [RC] Whose fricking idea was to make this not replaceable?
+	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->x, Owner->y, Owner->z, ALLOW_REPLACE);
 	if (speedMo)
 	{
 		speedMo->angle = Owner->angle;

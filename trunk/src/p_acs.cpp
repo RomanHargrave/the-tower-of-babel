@@ -2754,6 +2754,13 @@ enum
 	APROP_Mass			= 32,
 	APROP_Accuracy      = 33,
 	APROP_Stamina       = 34,
+	APROP_DamageTaken	= 35,
+	APROP_GunOffsetX	= 36,
+	APROP_GunOffsetY	= 37,
+	APROP_Radius		= 38,
+	APROP_Height		= 39,
+	APROP_PainChance	= 40,
+	APROP_DamageType	= 41,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2957,6 +2964,32 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->Mass = value;
 		break;
 
+	case APROP_DamageTaken:
+		actor->damagetaken = value;
+		break;
+
+	case APROP_GunOffsetX:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sx = value;
+		break;
+
+	case APROP_GunOffsetY:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sy = value;
+		break;
+
+	case APROP_Radius:
+		actor->radius = value;
+		break;
+	
+	case APROP_Height:
+		actor->height = value;
+		break;
+
+	case APROP_PainChance:
+		actor->PainChance = value;
+		break;
+
 	case APROP_Accuracy:
 		actor->accuracy = value;
 		break;
@@ -3031,9 +3064,21 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_ScaleX: 		return actor->scaleX;
 	case APROP_ScaleY: 		return actor->scaleY;
 	case APROP_Mass: 		return actor->Mass;
+	case APROP_DamageTaken:	return actor->damagetaken;
+	case APROP_GunOffsetX:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+								return static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sx;
+							else
+								return 0;
+	case APROP_GunOffsetY:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+								return static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sy;
+							else
+								return 0;
+	case APROP_Radius:		return actor->radius;
+	case APROP_Height:		return actor->height;
+	case APROP_PainChance:	return actor->PainChance;
+	case APROP_DamageType:	return actor->DamageType;
 	case APROP_Accuracy:    return actor->accuracy;
 	case APROP_Stamina:     return actor->stamina;
-
 	default:				return 0;
 	}
 }
@@ -3071,6 +3116,10 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_ScaleX:
 		case APROP_ScaleY:
 		case APROP_Mass:
+		case APROP_DamageTaken:
+		case APROP_Radius:
+		case APROP_Height:
+		case APROP_PainChance:
 		case APROP_Accuracy:
 		case APROP_Stamina:
 			return (GetActorProperty(tid, property) == value);
@@ -3095,6 +3144,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_ActiveSound:	string = actor->ActiveSound; break; 
 		case APROP_Species:		string = actor->GetSpecies(); break;
 		case APROP_NameTag:		string = actor->GetTag(); break;
+		case APROP_DamageType:	string = actor->DamageType; break;
 	}
 	if (string == NULL) string = "";
 	return (!stricmp(string, FBehavior::StaticLookupString(value)));
@@ -3545,6 +3595,11 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_GetActorViewHeight:
 			actor = SingleActorFromTID(args[0], activator);
+
+			if (args[0] == 0)
+			{
+				actor = (AActor *) activator;
+			}
 			if (actor != NULL)
 			{
 				if (actor->player != NULL)
@@ -6489,6 +6544,23 @@ int DLevelScript::RunScript ()
             }
             break;
 
+		case PCD_CHECKNEXTWEAPON:
+
+            if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
+                activator->player->PendingWeapon == NULL)
+            {
+				STACK(1) = 0;
+			}
+			else
+			{
+				AInventory *item = activator->FindInventory (PClass::FindClass (
+					FBehavior::StaticLookupString (STACK(1))));
+				AWeapon *weap = static_cast<AWeapon *> (item);
+
+				STACK(1) = activator->player->PendingWeapon->GetClass()->TypeName == FName(FBehavior::StaticLookupString (STACK(1)), true);
+			}
+			break;
+
 		case PCD_SETWEAPON:
 			if (activator == NULL || activator->player == NULL)
 			{
@@ -6527,7 +6599,7 @@ int DLevelScript::RunScript ()
 				}
 			}
 			break;
-
+			
 		case PCD_SETMARINEWEAPON:
 			if (STACK(2) != 0)
 			{

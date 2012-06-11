@@ -1313,6 +1313,7 @@ enum
 	CPF_USEAMMO = 1,
 	CPF_DAGGER = 2,
 	CPF_PULLIN = 4,
+	CPF_NOSPAWNRANDOM = 8,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
@@ -1337,7 +1338,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	if (!norandom) Damage *= (pr_cwpunch()%8+1);
 
-	angle = self->angle + (pr_cwpunch.Random2() << 18);
+	if(!(flags & CPF_NOSPAWNRANDOM)) angle = self->angle + (pr_cwpunch.Random2() << 18);
+	else angle = self->angle;
 	if (Range == 0) Range = MELEERANGE;
 	pitch = P_AimLineAttack (self, angle, Range, &linetarget);
 
@@ -1523,7 +1525,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 											self->target->y - self->target->vely * 3);
 		}
 
-		if (self->target->flags & MF_SHADOW)
+		if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 		{
 			angle_t rnd = pr_crailgun.Random2() << 21;
 			self->angle += rnd;
@@ -2231,10 +2233,106 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetMass)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(mass, 0);
 
 	self->Mass = mass;
+}
+
+//===========================================================================
+//
+// [RC] A_SetPropertyInt(str property, int value)
+//
+// Lets the user change the value of a certain property.
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPropertyInt)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_STRING(property, 0);
+	ACTION_PARAM_INT(value, 1);
+
+	if (!strcmp(property,"Health"))
+	{
+		self->health = value;
+	}
+	if (!strcmp(property,"Damage"))
+	{
+		self->Damage = value;
+	}
+	if (!strcmp(property,"MinMissileChance"))
+	{
+		self->MinMissileChance = (BYTE)value;
+	}
+	if (!strcmp(property,"PainChance"))
+	{
+		self->PainChance = value;
+	}
+}
+
+//===========================================================================
+//
+// [RC] A_SetPropertyFixed(str property, int value)
+//
+// Lets the user change the value to a certain property.
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPropertyFixed)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_STRING(property, 0);
+	ACTION_PARAM_FIXED(value, 1);
+
+	if (!strcmp(property,"Radius"))
+	{
+		self->radius = value;
+	}
+	if (!strcmp(property,"Height"))
+	{
+		self->height = value;
+	}
+	if (!strcmp(property,"Speed"))
+	{
+		self->Speed = value;
+	}
+	if (!strcmp(property,"Gravity"))
+	{
+		self->gravity = value;
+	}
+	if (!strcmp(property,"MeleeRange"))
+	{
+		self->meleerange = value;
+	}
+	if (!strcmp(property,"MaxTargetRange"))
+	{
+		self->maxtargetrange = value;
+	}
+	if (!strcmp(property,"MeleeThreshold"))
+	{
+		self->meleethreshold = value;
+	}
+	if (!strcmp(property,"PushFactor"))
+	{
+		self->pushfactor = value;
+	}
+	if (!strcmp(property,"MaxDropOffHeight"))
+	{
+		self->MaxDropOffHeight = value;
+	}
+	if (!strcmp(property,"MaxStepHeight"))
+	{
+		self->MaxStepHeight = value;
+	}
+	if (!strcmp(property,"FloatSpeed"))
+	{
+		self->FloatSpeed = value;
+	}
+	if (!strcmp(property,"ReactionTime"))
+	{
+		self->reactiontime = value;
+	}
 }
 
 //===========================================================================
@@ -3969,7 +4067,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 	hitchance -= dist * (dodge ? 16 : 8);
 
 	// While we're here, we may as well do something for this:
-	if (self->target->flags & MF_SHADOW)
+	if (self->target->flags & MF_SHADOW && !(self->flags & MF6_SEEINVISIBLE))
 	{
 		hitchance >>= 2;
 	}

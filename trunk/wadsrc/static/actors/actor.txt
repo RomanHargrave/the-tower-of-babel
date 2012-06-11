@@ -242,6 +242,8 @@ ACTOR Actor native //: Thinker
 	action native A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, state success_state = "");
 	action native A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
 	action native A_Weave(int xspeed, int yspeed, float xdist, float ydist);
+	action native A_SetPropertyFixed(string property, float value);
+	action native A_SetPropertyInt(string property, int value);
 
 	action native A_Recoil(float xyvel);
 	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label, int forward_ptr = AAPTR_DEFAULT);

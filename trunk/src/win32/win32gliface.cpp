@@ -416,7 +416,7 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 		style |= WS_POPUP;
 	else
 	{
-		style |= WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX;
+		style |= WS_OVERLAPPEDWINDOW;
 		exStyle |= WS_EX_WINDOWEDGE;
 	}
 

@@ -714,6 +714,9 @@ public:
 
 	// What species am I?
 	virtual FName GetSpecies();
+
+	// Track damage dealt directly from P_DamageMobj.
+	int damagetaken;
 	
 	// Enter the crash state
 	void Crash();

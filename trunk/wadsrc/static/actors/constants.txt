@@ -137,6 +137,7 @@ const int SMF_CURSPEED = 4;
 const int CPF_USEAMMO = 1;
 const int CPF_DAGGER = 2;
 const int CPF_PULLIN = 4;
+const int CPF_NOSPAWNRANDOM = 8;
 
 // Flags for A_Teleport
 const int TF_TELEFRAG = 1;

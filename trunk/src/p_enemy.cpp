@@ -1670,7 +1670,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 		// [RC] Well, let's let special monsters with this flag active be able to see
 		// the player then, eh?
-		if(!(actor->flags & MF6_SEEINVISIBLE)) 
+		if(!(actor->flags & MF6_SEEINVISIBLE))
 		{
 			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
@@ -1688,7 +1688,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 				}
 			}
 		}
-		
+
 		// [RH] Need to be sure the reactiontime is 0 if the monster is
 		//		leaving its goal to go after a player.
 		if (actor->goal && actor->target == actor->goal)
@@ -2774,6 +2774,32 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 		self->angle = other_angle;
 	}
 
+	if (max_pitch <= ANGLE_180)
+	{
+		fixed_t dist_x = self->target->x - self->x;
+		fixed_t dist_y = self->target->y - self->y;
+		fixed_t dist_z = self->target->z - self->z;
+		double dist_xy = sqrt(((double)dist_x * (double)dist_x) + ((double)dist_y * (double)dist_y));
+		double dist = sqrt((dist_xy * dist_xy) + ((double)dist_z * (double)dist_z));
+
+		angle_t target_pitch = rad2bam((PI*2) - asin(dist_z / dist));
+		
+		if (max_pitch && (max_pitch < abs(self->pitch - target_pitch)))
+		{
+			if (self->pitch > target_pitch)
+			{
+				if (self->pitch - target_pitch < ANGLE_180) self->pitch -= max_pitch;
+				else self->pitch += max_pitch;
+			}
+			else
+			{
+				if (target_pitch - self->pitch < ANGLE_180) self->pitch += max_pitch;
+				else self->pitch -= max_pitch;
+			}
+		}
+		else self->pitch = target_pitch;
+	}
+
 	// [DH] Now set pitch. In order to maintain compatibility, this can be
 	// disabled and is so by default.
 	if (max_pitch <= ANGLE_180)
@@ -2807,10 +2833,13 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 	}
 
 	// This will never work well if the turn angle is limited.
-	if (max_turn == 0 && (self->angle == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
-    {
-		self->angle += pr_facetarget.Random2() << 21;
-    }
+	if (!(self->flags6 & MF6_SEEINVISIBLE))
+	{
+		if (max_turn == 0 && (self->angle == other_angle) && other->flags & MF_SHADOW)
+		{
+			self->angle += pr_facetarget.Random2() << 21;
+		}
+	}
 }
 
 void A_FaceTarget (AActor *self, angle_t max_turn, angle_t max_pitch)

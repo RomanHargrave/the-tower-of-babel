@@ -259,6 +259,18 @@ do_stop:
 					sc.MustGetStringName(")");
 					continue;
 				}
+				if (sc.Compare("ROFFSET"))
+				{
+					// [RC] Specify a weapon offset, relative to it.
+					sc.MustGetStringName("(");
+					sc.MustGetNumber();
+					state.Misc1 += sc.Number;
+					sc.MustGetStringName (",");
+					sc.MustGetNumber();
+					state.Misc2 += sc.Number;
+					sc.MustGetStringName(")");
+					continue;
+				}
 				if (sc.Compare("LIGHT"))
 				{
 					sc.MustGetStringName("(");

@@ -5456,7 +5456,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PCl
 
 	an = source->angle;
 
-	if (dest->flags & MF_SHADOW)
+	if (dest->flags & MF_SHADOW && !(source->flags6 & MF6_SEEINVISIBLE))
 	{
 		an += pr_spawnmissile.Random2() << 20;
 	}
