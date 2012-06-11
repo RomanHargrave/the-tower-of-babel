@@ -834,10 +834,13 @@ CCMD(linetarget)
 	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, &linetarget, 0);
 	if (linetarget)
 	{
-		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
+		Printf("Target=%s, Health=%d, Spawnhealth=%d,\n PainChance=%d, Radius=%d, Height=%d\n",
 			linetarget->GetClass()->TypeName.GetChars(),
 			linetarget->health,
-			linetarget->SpawnHealth());
+			linetarget->SpawnHealth(),
+			linetarget->PainChance,
+			linetarget->radius,
+			linetarget->height);
 	}
 	else Printf("No target found\n");
 }

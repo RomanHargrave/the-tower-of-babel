@@ -131,6 +131,7 @@ enum
 	IF_INITEFFECTFAILED	= 1<<16,	// CreateCopy tried to activate a powerup and activation failed (can happen with PowerMorph)
 	IF_NOATTENPICKUPSOUND = 1<<17,	// Play pickup sound with ATTN_NONE
 	IF_PERSISTENTPOWER	= 1<<18,	// Powerup is kept when travelling between levels
+	IF_NOAUTOAIM		= 1<<19,	// No auto aim for functions when used by an inventory item
 };
 
 

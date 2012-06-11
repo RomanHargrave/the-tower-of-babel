@@ -964,7 +964,7 @@ DEFINE_PROPERTY(bouncetype, S, Actor)
 DEFINE_PROPERTY(bouncefactor, F, Actor)
 {
 	PROP_FIXED_PARM(id, 0);
-	defaults->bouncefactor = clamp<fixed_t>(id, 0, FRACUNIT);
+	defaults->bouncefactor = clamp<fixed_t>(id, 0, id);
 }
 
 //==========================================================================
@@ -973,7 +973,7 @@ DEFINE_PROPERTY(bouncefactor, F, Actor)
 DEFINE_PROPERTY(wallbouncefactor, F, Actor)
 {
 	PROP_FIXED_PARM(id, 0);
-	defaults->wallbouncefactor = clamp<fixed_t>(id, 0, FRACUNIT);
+	defaults->wallbouncefactor = clamp<fixed_t>(id, 0, id);
 }
 
 //==========================================================================

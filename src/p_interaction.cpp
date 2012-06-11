@@ -895,6 +895,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	int painchance = 0;
 	FState * woundstate = NULL;
 	PainChanceList * pc = NULL;
+	int damagetaken = 0;
 	bool justhit = false;
 
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
@@ -973,6 +974,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		{
 			// Take half damage in trainer mode
 			damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
+			
 		}
 		// Special damage types
 		if (inflictor)
@@ -982,16 +984,21 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				if (player != NULL)
 				{
 					if (!deathmatch && inflictor->FriendPlayer > 0)
+					{
 						return;
+					}
 				}
 				else if (target->flags4 & MF4_SPECTRAL)
 				{
 					if (inflictor->FriendPlayer == 0 && !target->IsHostile(inflictor))
+					{
 						return;
+					}
 				}
 			}
 
 			damage = inflictor->DoSpecialDamage (target, damage);
+			
 			if (damage == -1)
 			{
 				return;
@@ -1016,12 +1023,14 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		{
 			int olddam = damage;
 			target->Inventory->ModifyDamage(olddam, mod, damage, true);
+			
 			if (olddam != damage && damage <= 0)
 			{ // Still allow FORCEPAIN
 				if (MustForcePain(target, inflictor))
 				{
 					goto dopain;
 				}
+
 				return;
 			}
 		}
@@ -1044,6 +1053,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 
 		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
+		
 	}
 	if (damage == -1)
 	{
@@ -1130,8 +1140,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		if (damage < TELEFRAG_DAMAGE)
 		{ // Still allow telefragging :-(
 			damage = (int)((float)damage * level.teamdamage);
+			
 			if (damage <= 0)
+			{
 				return;
+			}
 		}
 	}
 
@@ -1152,6 +1165,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			&& damage >= target->health)
 		{
 			damage = target->health - 1;
+			
 		}
 
 		if (!(flags & DMG_FORCED))
@@ -1168,6 +1182,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				int newdam = damage;
 				player->mo->Inventory->AbsorbDamage (damage, mod, newdam);
 				damage = newdam;
+				
 				if (damage <= 0)
 				{
 					// If MF6_FORCEPAIN is set, make the player enter the pain state.
@@ -1238,10 +1253,10 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				return;
 			}
 		}
-	
-		target->health -= damage;	
+		target->health -= damage;
 	}
 
+	target->damagetaken = damage;
 	//
 	// the damage has been dealt; now deal with the consequences
 	//
@@ -1264,6 +1279,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	if (target->health <= 0)
 	{ // Death
 		target->special1 = damage;
+
 		// check for special fire damage or ice damage deaths
 		if (mod == NAME_Fire)
 		{
@@ -1399,6 +1415,7 @@ dopain:
 	// killough 11/98: Don't attack a friend, unless hit by that friend.
 	if (justhit && (target->target == source || !target->target || !target->IsFriend(target->target)))
 		target->flags |= MF_JUSTHIT;    // fight back!
+
 }
 
 void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period, FName type)
