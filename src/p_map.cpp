@@ -4989,11 +4989,20 @@ void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 			thing->z = thing->z - oldfloorz + thing->floorz;
 			P_CheckFakeFloorTriggers (thing, oldz);
 		}
-		else if ((thing->flags & MF_NOGRAVITY) || (thing->flags5 & MF5_MOVEWITHSECTOR) ||
+		else if ((thing->flags & MF_NOGRAVITY) || (thing->flags5 & MF5_MOVEWITHSECTOR) || 
 			(((cpos->sector->Flags & SECF_FLOORDROP) || cpos->moveamt < 9*FRACUNIT)
 			 && thing->z - thing->floorz <= cpos->moveamt))
 		{
 			thing->z = thing->floorz;
+			P_CheckFakeFloorTriggers (thing, oldz);
+		}
+	}
+	else if ((thing->z != oldfloorz && !(thing->flags & MF_NOLIFTDROP)))
+	{
+		fixed_t oldz = thing->z;
+		if ((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
+		{
+			thing->z = thing->z - oldfloorz + thing->floorz;
 			P_CheckFakeFloorTriggers (thing, oldz);
 		}
 	}
@@ -5024,6 +5033,7 @@ void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 		}
 		intersectors.Clear ();
 		fixed_t oldz = thing->z;
+		//if (!(thing->flags2 & MF2_FLOATBOB) || !((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR)))
 		if (!(thing->flags2 & MF2_FLOATBOB))
 		{
 			thing->z = thing->floorz;
@@ -5032,6 +5042,44 @@ void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 		{
 			thing->z = thing->z - oldfloorz + thing->floorz;
 		}
+		if((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
+		{
+			thing->z = thing->z - oldfloorz + thing->floorz;
+			P_DoCrunch (thing, cpos);
+			P_CheckFakeFloorTriggers (thing, oldz);
+		}
+
+		switch (P_PushUp (thing, cpos))
+		{
+		default:
+			P_CheckFakeFloorTriggers (thing, oldz);
+			break;
+		case 1:
+			P_DoCrunch (thing, cpos);
+			P_CheckFakeFloorTriggers (thing, oldz);
+			break;
+		case 2:
+			P_DoCrunch (thing, cpos);
+			thing->z = oldz;
+			break;
+		}
+	}
+	else
+	{
+		if (thing->flags4 & MF4_ACTLIKEBRIDGE) 
+		{
+			cpos->nofit = true;
+			return; // do not move bridge things
+		}
+		intersectors.Clear ();
+		fixed_t oldz = thing->z;
+		if((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
+		{
+			thing->z = thing->z - oldfloorz + thing->floorz;
+			P_DoCrunch (thing, cpos);
+			P_CheckFakeFloorTriggers (thing, oldz);
+		}
+
 		switch (P_PushUp (thing, cpos))
 		{
 		default:
