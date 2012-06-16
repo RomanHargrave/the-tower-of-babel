@@ -333,6 +333,7 @@ enum
 	MF6_INTRYMOVE		= 0x10000000,	// Executing P_TryMove
 	MF6_NOTAUTOAIMED	= 0x20000000,	// Do not subject actor to player autoaim.
 	MF6_RELATIVETOFLOOR	= 0x40000000,	// [RC] Make flying actors be affected by lifts.
+	MF6_BLASTNOTHURT	= 0x80000000,	// [RC] Actors don't get impact damage from blasts.
 // --- mobj.renderflags ---
 
 	RF_XFLIP			= 0x0001,	// Flip sprite horizontally
