@@ -2028,7 +2028,7 @@ explode:
 	}
 
 	if (mo->z > mo->floorz && !(mo->flags2 & MF2_ONMOBJ) &&
-		(!(mo->flags2 & MF2_FLY) || !(mo->flags & MF_NOGRAVITY)) && !mo->waterlevel)
+		(!(mo->flags2 & MF2_FLY) || !(mo->flags & MF_NOGRAVITY) && !mo->waterlevel))
 	{ // [RH] Friction when falling is available for larger aircontrols
 		if (player != NULL && level.airfriction != FRACUNIT)
 		{
