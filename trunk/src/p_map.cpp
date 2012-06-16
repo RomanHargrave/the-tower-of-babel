@@ -640,7 +640,7 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	
 	if (!ld->backsector)
 	{ // One sided line
-		if (tm.thing->flags2 & MF2_BLASTED)
+		if (tm.thing->flags2 & MF2_BLASTED && !(tm.thing->flags6 & MF6_BLASTNOTHURT))
 		{
 			P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 		}
@@ -670,7 +670,7 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 			((Projectile) && (ld->flags & ML_BLOCKPROJECTILE)) ||				// block projectiles
 			((tm.thing->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS)))	// block floaters
 		{
-			if (tm.thing->flags2 & MF2_BLASTED)
+			if (tm.thing->flags2 & MF2_BLASTED && !(tm.thing->flags6 & MF6_BLASTNOTHURT))
 			{
 				P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 			}
@@ -950,7 +950,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		return res;
 	}
 	// Check for blasted thing running into another
-	if (tm.thing->flags2 & MF2_BLASTED && (thing->flags & MF_SHOOTABLE))
+	if ((tm.thing->flags2 & MF2_BLASTED  && !(tm.thing->flags6 & MF6_BLASTNOTHURT)) && (thing->flags & MF_SHOOTABLE))
 	{
 		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER) && !(thing->flags3 & MF3_DONTBLAST))
 		{
@@ -2049,7 +2049,7 @@ pushline:
 	{
 		int numSpecHitTemp;
 
-		if (tm.thing->flags2 & MF2_BLASTED)
+		if (tm.thing->flags2 & MF2_BLASTED && !(tm.thing->flags6 & MF6_BLASTNOTHURT))
 		{
 			P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 		}
