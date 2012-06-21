@@ -2964,6 +2964,14 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->Mass = value;
 		break;
 
+	case APROP_Accuracy:
+		actor->accuracy = value;
+		break;
+
+	case APROP_Stamina:
+		actor->stamina = value;
+		break;
+ 
 	case APROP_DamageTaken:
 		actor->damagetaken = value;
 		break;
@@ -2990,12 +2998,8 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->PainChance = value;
 		break;
 
-	case APROP_Accuracy:
-		actor->accuracy = value;
-		break;
-
-	case APROP_Stamina:
-		actor->stamina = value;
+	case APROP_DamageType:
+		actor->DamageType = FBehavior::StaticLookupString(value);
 		break;
 
 	default:
@@ -3064,6 +3068,8 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_ScaleX: 		return actor->scaleX;
 	case APROP_ScaleY: 		return actor->scaleY;
 	case APROP_Mass: 		return actor->Mass;
+	case APROP_Accuracy:    return actor->accuracy;
+	case APROP_Stamina:     return actor->stamina;
 	case APROP_DamageTaken:	return actor->damagetaken;
 	case APROP_GunOffsetX:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 								return static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sx;
@@ -3077,8 +3083,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Height:		return actor->height;
 	case APROP_PainChance:	return actor->PainChance;
 	case APROP_DamageType:	return actor->DamageType;
-	case APROP_Accuracy:    return actor->accuracy;
-	case APROP_Stamina:     return actor->stamina;
+
 	default:				return 0;
 	}
 }
@@ -3116,12 +3121,12 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_ScaleX:
 		case APROP_ScaleY:
 		case APROP_Mass:
+		case APROP_Accuracy:
+		case APROP_Stamina:
 		case APROP_DamageTaken:
 		case APROP_Radius:
 		case APROP_Height:
 		case APROP_PainChance:
-		case APROP_Accuracy:
-		case APROP_Stamina:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -3595,7 +3600,6 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_GetActorViewHeight:
 			actor = SingleActorFromTID(args[0], activator);
-
 			if (args[0] == 0)
 			{
 				actor = (AActor *) activator;
@@ -3950,6 +3954,8 @@ enum
 #define NEXTSHORT	(fmt==ACS_LittleEnhanced?getshort(pc):NEXTWORD)
 #define STACK(a)	(Stack[sp - (a)])
 #define PushToStack(a)	(Stack[sp++] = (a))
+// Direct instructions that take strings need to have the tag applied.
+#define TAGSTR(a)	(a|activeBehavior->GetLibraryID())
 
 inline int getbyte (int *&pc)
 {
@@ -4054,7 +4060,7 @@ int DLevelScript::RunScript ()
 
 	while (state == SCRIPT_Running)
 	{
-		if (++runaway > 500000)
+		if (++runaway > 2000000)
 		{
 			Printf ("Runaway %s terminated\n", ScriptPresentation(script).GetChars());
 			state = SCRIPT_PleaseRemove;
@@ -5243,7 +5249,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHANGEFLOORDIRECT:
-			ChangeFlat (uallong(pc[0]), uallong(pc[1]), 0);
+			ChangeFlat (uallong(pc[0]), TAGSTR(uallong(pc[1])), 0);
 			pc += 2;
 			break;
 
@@ -5253,7 +5259,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHANGECEILINGDIRECT:
-			ChangeFlat (uallong(pc[0]), uallong(pc[1]), 1);
+			ChangeFlat (uallong(pc[0]), TAGSTR(uallong(pc[1])), 1);
 			pc += 2;
 			break;
 
@@ -5757,7 +5763,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETFONTDIRECT:
-			DoSetFont (uallong(pc[0]) | activeBehavior->GetLibraryID());
+			DoSetFont (TAGSTR(uallong(pc[0])));
 			pc++;
 			break;
 
@@ -6089,7 +6095,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SPAWNDIRECT:
-			PushToStack (DoSpawn (uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), uallong(pc[4]), uallong(pc[5]), false));
+			PushToStack (DoSpawn (TAGSTR(uallong(pc[0])), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), uallong(pc[4]), uallong(pc[5]), false));
 			pc += 6;
 			break;
 
@@ -6099,7 +6105,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SPAWNSPOTDIRECT:
-			PushToStack (DoSpawnSpot (uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), false));
+			PushToStack (DoSpawnSpot (TAGSTR(uallong(pc[0])), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), false));
 			pc += 4;
 			break;
 
@@ -6155,7 +6161,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_GIVEINVENTORYDIRECT:
-			GiveInventory (activator, FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
+			GiveInventory (activator, FBehavior::StaticLookupString (TAGSTR(uallong(pc[0]))), uallong(pc[1]));
 			pc += 2;
 			break;
 
@@ -6185,7 +6191,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_TAKEINVENTORYDIRECT:
-			TakeInventory (activator, FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
+			TakeInventory (activator, FBehavior::StaticLookupString (TAGSTR(uallong(pc[0]))), uallong(pc[1]));
 			pc += 2;
 			break;
 
@@ -6200,7 +6206,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHECKINVENTORYDIRECT:
-			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (uallong(pc[0]))));
+			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (TAGSTR(uallong(pc[0])))));
 			pc += 1;
 			break;
 
@@ -6304,7 +6310,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETMUSICDIRECT:
-			S_ChangeMusic (FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
+			S_ChangeMusic (FBehavior::StaticLookupString (TAGSTR(uallong(pc[0]))), uallong(pc[1]));
 			pc += 3;
 			break;
 
@@ -6319,7 +6325,7 @@ int DLevelScript::RunScript ()
 		case PCD_LOCALSETMUSICDIRECT:
 			if (activator == players[consoleplayer].mo)
 			{
-				S_ChangeMusic (FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
+				S_ChangeMusic (FBehavior::StaticLookupString (TAGSTR(uallong(pc[0]))), uallong(pc[1]));
 			}
 			pc += 3;
 			break;
@@ -6543,7 +6549,7 @@ int DLevelScript::RunScript ()
 				STACK(1) = activator->player->ReadyWeapon->GetClass()->TypeName == FName(FBehavior::StaticLookupString (STACK(1)), true);
             }
             break;
-
+		//This is so horribly broken. Will have to work on this someday.
 		case PCD_CHECKNEXTWEAPON:
 
             if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
@@ -6560,6 +6566,7 @@ int DLevelScript::RunScript ()
 				STACK(1) = activator->player->PendingWeapon->GetClass()->TypeName == FName(FBehavior::StaticLookupString (STACK(1)), true);
 			}
 			break;
+
 
 		case PCD_SETWEAPON:
 			if (activator == NULL || activator->player == NULL)
@@ -6599,7 +6606,7 @@ int DLevelScript::RunScript ()
 				}
 			}
 			break;
-			
+
 		case PCD_SETMARINEWEAPON:
 			if (STACK(2) != 0)
 			{

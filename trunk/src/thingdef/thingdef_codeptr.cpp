@@ -531,7 +531,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 		int angle = bangle + (pr_cabullet.Random2() << 20);
 		int damage = ((pr_cabullet()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
-			NAME_None, NAME_BulletPuff);
+			NAME_Hitscan, NAME_BulletPuff);
     }
 }
 
@@ -763,7 +763,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 			// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
 			P_LineAttack (self, ang, MISSILERANGE, 0,
 				//P_AimLineAttack (self, ang, MISSILERANGE), 
-				naildamage, NAME_None, pufftype);
+				naildamage, NAME_Hitscan, pufftype);
 		}
 	}
 
@@ -796,12 +796,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	ACTION_PARAM_INT(thrustFlags, 2);
 	ACTION_PARAM_INT(fullthrustdistance, 3);
 
-	bool affectSource = (thrustFlags & RTF_AFFECTSOURCE);
-	bool noimpactdamage = (thrustFlags & RTF_NOIMPACTDAMAGE);
+	bool affectSource = !!(thrustFlags & RTF_AFFECTSOURCE);
+	bool noimpactdamage = !!(thrustFlags & RTF_NOIMPACTDAMAGE);
 
 	bool sourcenothrust = false;
 
-	//if (force <= 0) force = 128;
+	if (force <= 0) force = 128;
 	if (distance <= 0) distance = force;
 
 	// Temporarily negate MF2_NODMGTHRUST on the shooter, since it renders this function useless.
@@ -1055,7 +1055,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			if (!(Flags & CBAF_NORANDOM))
 				damage *= ((pr_cabullet()%3)+1);
 
-			P_LineAttack(self, angle, Range, slope, damage, NAME_None, pufftype);
+			P_LineAttack(self, angle, Range, slope, damage, NAME_Hitscan, pufftype);
 		}
     }
 }
@@ -1347,7 +1347,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	if (!norandom) Damage *= (pr_cwpunch()%8+1);
 
-	if(!(flags & CPF_NOSPAWNRANDOM)) angle = self->angle + (pr_cwpunch.Random2() << 18);
+	if (!(flags & CPF_NOSPAWNRANDOM)) angle = self->angle + (pr_cwpunch.Random2() << 18);
 	else angle = self->angle;
 	if (Range == 0) Range = MELEERANGE;
 	pitch = P_AimLineAttack (self, angle, Range, &linetarget);
@@ -2252,7 +2252,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetMass)
 //
 // [RC] A_SetPropertyInt(str property, int value)
 //
-// Lets the user change the value of a certain property.
+// Lets the user change the value to a certain property.
 //
 //===========================================================================
 
@@ -2343,6 +2343,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPropertyFixed)
 		self->reactiontime = value;
 	}
 }
+
 
 //===========================================================================
 //

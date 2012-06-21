@@ -146,6 +146,6 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 		{ // Out of range
 			continue;
 		}
-		BlastActor (mo, strength, speed, self, blasteffect, (blastflags & BF_NOIMPACTDAMAGE));
+		BlastActor (mo, strength, speed, self, blasteffect, !!(blastflags & BF_NOIMPACTDAMAGE));
 	}
 }
