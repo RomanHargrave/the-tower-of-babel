@@ -598,9 +598,11 @@ public:
 		PCD_STRCPYTOMAPCHRANGE,	// [FDARI] input range (copy string to all/part of array)
 		PCD_STRCPYTOWORLDCHRANGE,
 		PCD_STRCPYTOGLOBALCHRANGE,
-		PCD_CHECKNEXTWEAPON,
 
-/*360*/	PCODE_COMMAND_COUNT
+		PCD_PUSHFUNCTION,
+/*360*/	PCD_CALLSTACK,
+
+/*361*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts
