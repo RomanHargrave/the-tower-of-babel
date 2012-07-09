@@ -298,6 +298,8 @@ static FFlagDef InventoryFlags[] =
 	DEFINE_FLAG(IF, IGNORESKILL, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, NOATTENPICKUPSOUND, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, PERSISTENTPOWER, AInventory, ItemFlags),
+
+	DEFINE_FLAG(IF, RESTRICTABSOLUTELY, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, NOAUTOAIM, AInventory, ItemFlags),
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
@@ -635,4 +637,3 @@ void InitThingdef()
 		qsort(&variables[0], variables.Size(), sizeof(variables[0]), varcmp);
 	}
 }
-
