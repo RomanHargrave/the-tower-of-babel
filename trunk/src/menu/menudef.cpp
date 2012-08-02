@@ -577,7 +577,7 @@ static void ParseOptionSettings(FScanner &sc)
 		else if (sc.Compare("LabelOffset"))
 		{
 			sc.MustGetNumber();
-			OptionSettings.mLabelOffset = sc.Number;
+			// ignored
 		}
 		else
 		{
