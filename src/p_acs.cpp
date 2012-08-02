@@ -2978,12 +2978,20 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_GunOffsetX:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-			static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sx = value;
+			for (int sprites = 0; sprites < NUMPSPRITES; sprites++)
+			{
+				static_cast<APlayerPawn *>(actor)->player->psprites[sprites].sx = value;
+			}
+			//static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sx = value;
 		break;
 
 	case APROP_GunOffsetY:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-			static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sy = value;
+			for (int sprites = 0; sprites < NUMPSPRITES; sprites++)
+			{
+				static_cast<APlayerPawn *>(actor)->player->psprites[sprites].sy = value;
+			}
+			//static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sy = value;
 		break;
 
 	case APROP_Radius:
@@ -3418,6 +3426,12 @@ enum EACSFunctions
 	ACSF_ACS_NamedLockedExecuteDoor,
 	ACSF_ACS_NamedExecuteWithResult,
 	ACSF_ACS_NamedExecuteAlways,
+	ACSF_UniqueTID,
+	ACSF_IsTIDUsed,
+
+	// ZDaemon
+	ACSF_GetTeamScore = 19620,
+	ACSF_SetTeamScore,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3932,6 +3946,14 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 					activationline, activator, backSide,
 					scriptnum, arg1, arg2, arg3, arg4);
 			}
+			break;
+
+		case ACSF_UniqueTID:
+			return P_FindUniqueTID(argCount > 0 ? args[0] : 0, argCount > 1 ? args[1] : 0);
+			break;
+
+		case ACSF_IsTIDUsed:
+			return P_IsTIDUsed(args[0]);
 			break;
 
 		default:
@@ -5356,20 +5378,24 @@ int DLevelScript::RunScript ()
 
 		case PCD_SCRIPTWAIT:
 			statedata = STACK(1);
+			sp--;
+scriptwait:
 			if (controller->RunningScripts.CheckKey(statedata) != NULL)
 				state = SCRIPT_ScriptWait;
 			else
 				state = SCRIPT_ScriptWaitPre;
-			sp--;
 			PutLast ();
 			break;
 
 		case PCD_SCRIPTWAITDIRECT:
-			state = SCRIPT_ScriptWait;
 			statedata = uallong(pc[0]);
 			pc++;
-			PutLast ();
-			break;
+			goto scriptwait;
+
+		case PCD_SCRIPTWAITNAMED:
+			statedata = -FName(FBehavior::StaticLookupString(STACK(1)));
+			sp--;
+			goto scriptwait;
 
 		case PCD_CLEARLINESPECIAL:
 			if (activationline != NULL)
@@ -6396,7 +6422,18 @@ int DLevelScript::RunScript ()
 		case PCD_GETACTORZ:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : (&actor->x)[pcd - PCD_GETACTORX];
+				if (actor == NULL)
+				{
+					STACK(1) = 0;
+				}
+				else if (pcd == PCD_GETACTORZ)
+				{
+					STACK(1) = actor->z + actor->GetBobOffset();
+				}
+				else
+				{
+					STACK(1) =  (&actor->x)[pcd - PCD_GETACTORX];
+				}
 			}
 			break;
 
