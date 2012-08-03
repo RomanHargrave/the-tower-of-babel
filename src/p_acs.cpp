@@ -6783,6 +6783,13 @@ scriptwait:
 			sp -= 7;
 			break;
 
+		case PCD_SPAWNPROJECTILEEX:
+			// Same, but takes an actor name instead of a spawn ID.
+			P_Thing_Projectile (STACK(7), activator, 0, FBehavior::StaticLookupString (STACK(6)), ((angle_t)(STACK(5)<<24)),
+				STACK(4)<<(FRACBITS-3), STACK(3)<<(FRACBITS-3), 0, NULL, STACK(2), STACK(1), false);
+			sp -= 7;
+			break;
+
 		case PCD_STRLEN:
 			STACK(1) = SDWORD(strlen(FBehavior::StaticLookupString (STACK(1))));
 			break;
@@ -7281,7 +7288,6 @@ scriptwait:
 				sp -= 5;
 			}
 			break;
-
  		}
  	}
 
