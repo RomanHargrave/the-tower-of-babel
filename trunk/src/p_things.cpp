@@ -361,6 +361,202 @@ nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
 	return rtn != 0;
 }
 
+bool P_Thing_ProjectileEx (int tid, AActor *source, int type, const char *type_name, angle_t angle,
+	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
+	bool leadTarget)
+{
+	int rtn = 0;
+	const PClass *kind;
+	AActor *spot, *mobj, *targ = forcedest;
+	FActorIterator iterator (tid);
+	double fspeed = speed;
+	int defflags3;
+
+	if (type_name == NULL)
+	{
+		if (type >= MAX_SPAWNABLES)
+			return false;
+
+		if ((kind = SpawnableThings[type]) == NULL)
+			return false;
+	}
+	else
+	{
+		if ((kind = PClass::FindClass(type_name)) == NULL || kind->ActorInfo == NULL)
+			return false;
+	}
+
+
+	// Handle decorate replacements.
+	kind = kind->GetReplacement();
+
+	defflags3 = GetDefaultByType (kind)->flags3;
+	if ((defflags3 & MF3_ISMONSTER) && 
+		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
+		return false;
+
+	if (tid == 0)
+	{
+		spot = source;
+	}
+	else
+	{
+		spot = iterator.Next();
+	}
+	while (spot != NULL)
+	{
+		FActorIterator tit (dest);
+
+		if (dest == 0 || (targ = tit.Next()))
+		{
+			do
+			{
+				fixed_t z = spot->z;
+				if (defflags3 & MF3_FLOORHUGGER)
+				{
+					z = ONFLOORZ;
+				}
+				else if (defflags3 & MF3_CEILINGHUGGER)
+				{
+					z = ONCEILINGZ;
+				}
+				else if (z != ONFLOORZ)
+				{
+					z -= spot->floorclip;
+				}
+				mobj = Spawn (kind, spot->x, spot->y, z, ALLOW_REPLACE);
+
+				if (mobj)
+				{
+					mobj->tid = newtid;
+					mobj->AddToHash ();
+					P_PlaySpawnSound(mobj, spot);
+					if (gravity)
+					{
+						mobj->flags &= ~MF_NOGRAVITY;
+						if (!(mobj->flags3 & MF3_ISMONSTER) && gravity == 1)
+						{
+							mobj->gravity = FRACUNIT/8;
+						}
+					}
+					else
+					{
+						mobj->flags |= MF_NOGRAVITY;
+					}
+					mobj->target = spot;
+
+					if (targ != NULL)
+					{
+						fixed_t spot[3] = { targ->x, targ->y, targ->z+targ->height/2 };
+						FVector3 aim(float(spot[0] - mobj->x), float(spot[1] - mobj->y), float(spot[2] - mobj->z));
+
+						if (leadTarget && speed > 0 && (targ->velx | targ->vely | targ->velz))
+						{
+							// Aiming at the target's position some time in the future
+							// is basically just an application of the law of sines:
+							//     a/sin(A) = b/sin(B)
+							// Thanks to all those on the notgod phorum for helping me
+							// with the math. I don't think I would have thought of using
+							// trig alone had I been left to solve it by myself.
+
+							FVector3 tvel(targ->velx, targ->vely, targ->velz);
+							if (!(targ->flags & MF_NOGRAVITY) && targ->waterlevel < 3)
+							{ // If the target is subject to gravity and not underwater,
+							  // assume that it isn't moving vertically. Thanks to gravity,
+							  // even if we did consider the vertical component of the target's
+							  // velocity, we would still miss more often than not.
+								tvel.Z = 0.0;
+								if ((targ->velx | targ->vely) == 0)
+								{
+									goto nolead;
+								}
+							}
+							double dist = aim.Length();
+							double targspeed = tvel.Length();
+							double ydotx = -aim | tvel;
+							double a = acos (clamp (ydotx / targspeed / dist, -1.0, 1.0));
+							double multiplier = double(pr_leadtarget.Random2())*0.1/255+1.1;
+							double sinb = -clamp (targspeed*multiplier * sin(a) / fspeed, -1.0, 1.0);
+
+							// Use the cross product of two of the triangle's sides to get a
+							// rotation vector.
+							FVector3 rv(tvel ^ aim);
+							// The vector must be normalized.
+							rv.MakeUnit();
+							// Now combine the rotation vector with angle b to get a rotation matrix.
+							FMatrix3x3 rm(rv, cos(asin(sinb)), sinb);
+							// And multiply the original aim vector with the matrix to get a
+							// new aim vector that leads the target.
+							FVector3 aimvec = rm * aim;
+							// And make the projectile follow that vector at the desired speed.
+							double aimscale = fspeed / dist;
+							mobj->velx = fixed_t (aimvec[0] * aimscale);
+							mobj->vely = fixed_t (aimvec[1] * aimscale);
+							mobj->velz = fixed_t (aimvec[2] * aimscale);
+							mobj->angle = R_PointToAngle2 (0, 0, mobj->velx, mobj->vely);
+						}
+						else
+						{
+nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
+							aim.Resize (fspeed);
+							mobj->velx = fixed_t(aim[0]);
+							mobj->vely = fixed_t(aim[1]);
+							mobj->velz = fixed_t(aim[2]);
+						}
+						if (mobj->flags2 & MF2_SEEKERMISSILE)
+						{
+							mobj->tracer = targ;
+						}
+					}
+					else
+					{
+						mobj->angle = angle;
+						mobj->velx = FixedMul (speed, finecosine[angle>>ANGLETOFINESHIFT]);
+						mobj->vely = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
+						mobj->velz = vspeed;
+					}
+					// Set the missile's speed to reflect the speed it was spawned at.
+					if (mobj->flags & MF_MISSILE)
+					{
+						mobj->Speed = fixed_t (sqrt (double(mobj->velx)*mobj->velx + double(mobj->vely)*mobj->vely + double(mobj->velz)*mobj->velz));
+					}
+					// Hugger missiles don't have any vertical velocity
+					if (mobj->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
+					{
+						mobj->velz = 0;
+					}
+					if (mobj->flags & MF_SPECIAL)
+					{
+						mobj->flags |= MF_DROPPED;
+					}
+					if (mobj->flags & MF_MISSILE)
+					{
+						if (P_CheckMissileSpawn (mobj))
+						{
+							rtn = true;
+						}
+					}
+					else if (!P_TestMobjLocation (mobj))
+					{
+						// If this is a monster, subtract it from the total monster
+						// count, because it already added to it during spawning.
+						mobj->ClearCounters();
+						mobj->Destroy ();
+					}
+					else
+					{
+						// It spawned fine.
+						rtn = 1;
+					}
+				}
+			} while (dest != 0 && (targ = tit.Next()));
+		}
+		spot = iterator.Next();
+	}
+
+	return rtn != 0;
+}
+
 int P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
 {
 	FActorIterator iterator (tid);
