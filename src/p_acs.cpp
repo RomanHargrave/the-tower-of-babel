@@ -3428,6 +3428,7 @@ enum EACSFunctions
 	ACSF_ACS_NamedExecuteAlways,
 	ACSF_UniqueTID,
 	ACSF_IsTIDUsed,
+	ACSF_SpawnProjectileEx,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,
@@ -3954,6 +3955,17 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_IsTIDUsed:
 			return P_IsTIDUsed(args[0]);
+			break;
+
+		case ACSF_SpawnProjectileEx:
+			{
+			int spX = args[3]<<FRACBITS;
+			int spY = args[4]<<FRACBITS;
+			int spZ = args[5]<<FRACBITS;
+			// Same, but takes an actor name instead of a spawn ID.
+			P_Thing_ProjectileEx (args[0], activator, 0, FBehavior::StaticLookupString (args[1]), ((angle_t)(args[2]<<24)),
+				spX,spY,spZ, args[6]<<(FRACBITS-3), args[7]<<(FRACBITS-3), 0, NULL, args[8], args[9], false);
+			}
 			break;
 
 		default:
@@ -6777,13 +6789,6 @@ scriptwait:
 			break;
 
 		case PCD_SPAWNPROJECTILE:
-			// Same, but takes an actor name instead of a spawn ID.
-			P_Thing_Projectile (STACK(7), activator, 0, FBehavior::StaticLookupString (STACK(6)), ((angle_t)(STACK(5)<<24)),
-				STACK(4)<<(FRACBITS-3), STACK(3)<<(FRACBITS-3), 0, NULL, STACK(2), STACK(1), false);
-			sp -= 7;
-			break;
-
-		case PCD_SPAWNPROJECTILEEX:
 			// Same, but takes an actor name instead of a spawn ID.
 			P_Thing_Projectile (STACK(7), activator, 0, FBehavior::StaticLookupString (STACK(6)), ((angle_t)(STACK(5)<<24)),
 				STACK(4)<<(FRACBITS-3), STACK(3)<<(FRACBITS-3), 0, NULL, STACK(2), STACK(1), false);
