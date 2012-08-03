@@ -601,7 +601,6 @@ public:
 		PCD_PUSHFUNCTION,		// from Eternity
 /*360*/	PCD_CALLSTACK,			// from Eternity
 		PCD_SCRIPTWAITNAMED,
-		PCD_SPAWNPROJECTILEEX,
 
 /*361*/	PCODE_COMMAND_COUNT
 	};

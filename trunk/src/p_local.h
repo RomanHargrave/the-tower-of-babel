@@ -163,6 +163,7 @@ bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 			bool leadTarget);
 bool	P_Thing_ProjectileEx (int tid, AActor *source, int type, const char * type_name, angle_t angle,
+			fixed_t spawnx, fixed_t spawny, fixed_t spawnz,
 			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 			bool leadTarget);
 bool	P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog);
