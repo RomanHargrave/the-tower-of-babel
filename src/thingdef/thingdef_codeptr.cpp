@@ -68,6 +68,7 @@
 #include "g_shared/a_specialspot.h"
 #include "actorptrselect.h"
 #include "m_bbox.h"
+#include "p_trace.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -780,6 +781,80 @@ enum
 	RTF_AFFECTSOURCE = 1,
 	RTF_NOIMPACTDAMAGE = 2,
 };
+
+//==========================================================================
+//
+// A_RadiusPull
+//
+//==========================================================================
+
+enum RP_Flags
+{
+	RPF_AFFECTSOURCE = 1,
+	RPF_AFFECTENEMY = 2,
+	RPF_AFFECTELSE = 4,
+	RPF_AFFECTSPECIES = 8
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusPull)
+{
+	ACTION_PARAM_START(4);
+	ACTION_PARAM_INT(force, 0);
+	ACTION_PARAM_INT(distance, 1);
+	ACTION_PARAM_INT(fulldistance, 2);
+	ACTION_PARAM_INT(flags, 3);
+
+	P_RadiusPull(self, self->target, force, distance, fulldistance, flags);
+}
+
+//==========================================================================
+//
+// A_PullActor
+//
+//==========================================================================
+
+enum PA_Flags
+{
+	PAF_AFFECTSOURCE = 1,
+	PAF_AFFECTENEMY = 2
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PullActor)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(force, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	FVector3 grapplevec;
+	AActor *patarget;
+	
+	if (self->target != NULL)
+	{
+		// Very messy code. Sorry..
+		if (PAF_AFFECTSOURCE & flags)
+		{
+			patarget = self->target;
+			grapplevec.X = float(self->x - self->target->x);
+			grapplevec.Y = float(self->y - self->target->y);
+			grapplevec.Z = float(self->z - self->target->z);
+		}
+		if (PAF_AFFECTENEMY & flags)
+		{
+			patarget = self->tracer;
+			grapplevec.X = float(self->target->x - self->x);
+			grapplevec.Y = float(self->target->y - self->y);
+			grapplevec.Z = float(self->target->z - self->z);
+		}
+
+		grapplevec.MakeUnit();
+		grapplevec *= float((force*FRACUNIT) / (self->target->Mass ? self->target->Mass : 1));
+
+		patarget->velx += fixed_t(grapplevec.X);
+		patarget->vely += fixed_t(grapplevec.Y);
+		patarget->velz += fixed_t(grapplevec.Z);
+
+	}
+}
 
 //==========================================================================
 //
@@ -2896,6 +2971,253 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 	self->target = NULL;
 	self->LastHeard = NULL;
 	self->lastenemy = NULL;
+}
+
+//==========================================================================
+//
+// A_CheckRay (state jump, int flags = CRF_AIM_VERT|CRF_AIM_HOR,
+//    fixed range = 0, angle angle = 0, angle pitch = 0, 
+//    fixed offsetheight = 32, fixed offsetwidth = 0,
+//	  int ptr_target = AAPTR_DEFAULT (target) )
+//
+//==========================================================================
+
+enum CR_flags
+{
+	CRF_NOAIM_VERT = 0x1,
+	CRF_NOAIM_HORZ = 0x2,
+
+	CRF_JUMPENEMY = 0x4,
+	CRF_JUMPFRIEND = 0x8,
+	CRF_JUMPOBJECT = 0x10,
+	CRF_JUMPNONHOSTILE = 0x20,
+
+	CRF_SKIPENEMY = 0x40,
+	CRF_SKIPFRIEND = 0x80,
+	CRF_SKIPOBJECT = 0x100,
+	CRF_SKIPNONHOSTILE = 0x200,
+
+	CRF_MUSTBESHOOTABLE = 0x400,
+
+	CRF_SKIPTARGET = 0x800,
+	CRF_ALLOWNULL = 0x1000,
+	CRF_CHECKPARTIAL = 0x2000,
+
+	CRF_MUSTBEGHOST = 0x4000,
+	CRF_IGNOREGHOST = 0x8000,
+	
+	CRF_MUSTBESOLID = 0x10000,
+	CRF_BEYONDTARGET = 0x20000
+};
+
+struct UnmanagedActorLink
+{
+	AActor *actor;
+	UnmanagedActorLink *next;
+
+	void relinkAllAndForget()
+	{
+		UnmanagedActorLink *a,*b;
+		a = this;
+		do
+		{
+			b = a->next;
+			a->actor->LinkToWorld();
+			delete a;
+			a = b;
+		}
+		while (a);
+	}
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRay)
+{
+	/*
+		Not accounted for / I don't know how it works: FLOORCLIP
+	*/
+
+	AActor *target;
+	fixed_t
+		x1, y1, z1,
+		vx, vy, vz;
+
+	ACTION_PARAM_START(9);
+	
+	ACTION_PARAM_STATE(jump, 0);
+	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_FIXED(range, 2);
+	ACTION_PARAM_FIXED(minrange, 3);
+	{
+		ACTION_PARAM_ANGLE(angle, 4);
+		ACTION_PARAM_ANGLE(pitch, 5);
+		ACTION_PARAM_FIXED(offsetheight, 6);
+		ACTION_PARAM_FIXED(offsetwidth, 7);
+		ACTION_PARAM_INT(ptr_target, 8);
+
+		ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+		
+		target = COPY_AAPTR(self, ptr_target == AAPTR_DEFAULT ? AAPTR_TARGET|AAPTR_PLAYER_GETTARGET|AAPTR_NULL : ptr_target); // no player-support by default
+
+		x1 = self->x;
+		y1 = self->y;
+		z1 = self->z + offsetheight - self->floorclip;
+
+		if (target)
+		{
+			FVector2 xyvec(target->x - x1, target->y - y1);
+			fixed_t distance = P_AproxDistance((fixed_t)xyvec.Length(), target->z - z1);
+
+			if (range && !(flags & CRF_CHECKPARTIAL))
+			{
+				if (distance > range) return;
+			}
+
+			{
+				angle_t ang;
+
+				if (flags & CRF_NOAIM_HORZ)
+				{
+					ang = self->angle;
+				}
+				else ang = R_PointToAngle2 (x1, y1, target->x, target->y);
+				
+				angle += ang;
+				
+				ang >>= ANGLETOFINESHIFT;
+				x1 += FixedMul(offsetwidth, finesine[ang]);
+				y1 -= FixedMul(offsetwidth, finecosine[ang]);
+			}
+
+			if (flags & CRF_NOAIM_VERT)
+			{
+				pitch += self->pitch;
+			}
+			else pitch += R_PointToAngle2 (0,0, (fixed_t)xyvec.Length(), target->z - z1 + target->height / 2);
+		}
+		else if (flags & CRF_ALLOWNULL)
+		{
+			angle += self->angle;
+			pitch += self->pitch;
+
+			angle_t ang = self->angle >> ANGLETOFINESHIFT;
+			x1 += FixedMul(offsetwidth, finesine[ang]);
+			y1 -= FixedMul(offsetwidth, finecosine[ang]);
+		}
+		else return;
+
+		angle >>= ANGLETOFINESHIFT;
+		pitch = (-pitch)>>ANGLETOFINESHIFT;
+
+		vx = FixedMul (finecosine[pitch], finecosine[angle]);
+		vy = FixedMul (finecosine[pitch], finesine[angle]);
+		vz = -finesine[pitch];
+	}
+
+	/* Variable set:
+
+		jump, flags, target
+		x1,y1,z1 (trace point of origin)
+		vx,vy,vz (trace unit vector)
+		range
+	*/
+
+	{
+		sector_t *sec = P_PointInSector(x1, y1);
+
+		// do we need to convert range in case of 0, or is 0 infinite range? // FTraceInfo::TraceTraverse implies that we'd get a null-vector, so...
+		if (!range) range = FIXED_MAX; // hopefully this is manageable; there won't be multiplications by more than 1.0
+
+		AActor *jumpQualifier = NULL;
+		UnmanagedActorLink *wal = new UnmanagedActorLink();
+
+		{
+			FTraceResults trace;
+			wal->next = NULL;
+			wal->actor = self;
+			self->UnlinkFromWorld();
+
+			while (Trace(x1, y1, z1, sec, vx, vy, vz, range, 0xFFFFFFFF, ML_BLOCKEVERYTHING, NULL, trace))
+			{
+				if (trace.HitType == TRACE_HitActor)
+				{
+					if (trace.Actor == target)
+					{
+						if (flags & CRF_SKIPTARGET)
+						{
+							if (flags & CRF_BEYONDTARGET) goto traceNext;
+							goto nojump;
+						}
+						else
+						{
+							jumpQualifier = target;
+							break;
+						}
+					}
+
+					if (flags & CRF_MUSTBESHOOTABLE)
+					{
+						// all shootability checks go here
+
+						if (!(trace.Actor->flags & MF_SHOOTABLE)) goto traceNext;
+						if (trace.Actor->flags2 & MF2_NONSHOOTABLE) goto traceNext;
+					}
+
+					if (flags & CRF_MUSTBESOLID)
+					{
+						if (!(trace.Actor->flags & MF_SOLID)) goto traceNext;
+					}
+
+					if (flags & CRF_MUSTBEGHOST)
+					{
+						if (!(trace.Actor->flags3 & MF3_GHOST)) goto traceNext;
+					}
+					else if (flags & CRF_IGNOREGHOST)
+					{
+						if (trace.Actor->flags3 & MF3_GHOST) goto traceNext;
+					}
+
+					if (
+							((flags & CRF_JUMPENEMY) && self->IsHostile(trace.Actor)) ||
+							((flags & CRF_JUMPFRIEND) && self->IsFriend(trace.Actor)) ||
+							((flags & CRF_JUMPOBJECT) && !(trace.Actor->flags3 & MF3_ISMONSTER)) ||
+							((flags & CRF_JUMPNONHOSTILE) && (trace.Actor->flags3 & MF3_ISMONSTER) && !self->IsHostile(trace.Actor))
+						)
+					{
+						jumpQualifier = trace.Actor;
+						break;
+					}
+
+					if (
+							((flags & CRF_SKIPENEMY) && self->IsHostile(trace.Actor)) ||
+							((flags & CRF_SKIPFRIEND) && self->IsFriend(trace.Actor)) ||
+							((flags & CRF_SKIPOBJECT) && !(trace.Actor->flags3 & MF3_ISMONSTER)) ||
+							((flags & CRF_SKIPNONHOSTILE) && (trace.Actor->flags3 & MF3_ISMONSTER) && !self->IsHostile(trace.Actor))
+						)
+					{
+						goto traceNext;
+					}
+				}
+				goto nojump;
+	traceNext:
+				UnmanagedActorLink *add = new UnmanagedActorLink();
+				add->next = wal;
+				add->actor = trace.Actor;
+				wal = add;
+				wal->actor->UnlinkFromWorld();
+			}
+		}
+		if (jumpQualifier)
+		{
+			if (minrange)
+			{
+				double dx = jumpQualifier->x - x1, dy = jumpQualifier->y - y1, dz = jumpQualifier->z + jumpQualifier->height/2 - z1;
+				if (sqrt(dx*dx+ dy*dy+ dz*dz) < minrange) goto nojump;
+			}
+			ACTION_JUMP(jump);
+		}
+nojump:
+		wal->relinkAllAndForget();
+	}
 }
 
 //==========================================================================

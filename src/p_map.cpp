@@ -4430,6 +4430,154 @@ CUSTOM_CVAR (Float, splashfactor, 1.f, CVAR_SERVERINFO)
 
 //==========================================================================
 //
+// P_RadiusPull
+// [RC] Source is the creature that caused the implosion at spot.
+//
+//==========================================================================
+
+enum RP_Flags
+{
+	RPF_AFFECTSOURCE = 1,
+	RPF_AFFECTENEMY = 2,
+	RPF_AFFECTELSE = 4,
+	RPF_AFFECTSPECIES = 8
+};
+
+void P_RadiusPull (AActor *pullspot, AActor *pullsource, int pullforce, int pulldistance,
+				   int fullpulldistance, int flags)
+{
+	if(pulldistance <= 0)
+		return;
+	fullpulldistance = clamp<int>(fullpulldistance, 0, pulldistance-1);
+
+	double pulldistancefloat = 1.f / (double)(pulldistance - fullpulldistance);
+
+	FBlockThingsIterator it(FBoundingBox(pullspot->x, pullspot->y, pulldistance<<FRACBITS));
+	AActor *thing;
+
+	
+	while ((thing = it.Next()))
+	{
+		if (!(RPF_AFFECTSOURCE & flags) && (thing == pullsource || thing == pullspot))
+		{ // Don't affect the 'blackhole' source.
+			continue;
+		}
+
+		// Don't let monsters of the same species affect each other.
+		
+		if (!(RPF_AFFECTSPECIES & flags)) // .. Unless we tell them to.
+		{
+			if ((pullsource && !thing->player) // code common to both checks
+			&& ( // Class check first
+				((pullsource->flags4 & MF4_DONTHARMCLASS) && (thing->GetClass() == pullsource->GetClass()))
+				|| // Nigh-identical species check second
+				((pullsource->flags6 & MF6_DONTHARMSPECIES) && (thing->GetSpecies() == pullsource->GetSpecies()))
+				)
+			)	continue;
+		}
+
+		// [RC] Barely different from P_RadiusAttack.
+		double points;
+		double len;
+		fixed_t dx, dy;
+		double boxradius;
+
+		dx = abs (thing->x - pullspot->x);
+		dy = abs (thing->y - pullspot->y);
+		boxradius = double (thing->radius);
+
+		// The damage pattern is square, not circular.
+		len = double (dx > dy ? dx : dy);
+
+		if (pullspot->z < thing->z || pullspot->z >= thing->z + thing->height)
+		{
+			double dz;
+
+			if (pullspot->z > thing->z)
+			{
+				dz = double (pullspot->z - thing->z - thing->height);
+			}
+			else
+			{
+				dz = double (thing->z - pullspot->z);
+			}
+			if (len <= boxradius)
+			{
+				len = dz;
+			}
+			else
+			{
+				len -= boxradius;
+				len = sqrt (len*len + dz*dz);
+			}
+		}
+		else
+		{
+			len -= boxradius;
+			if (len < 0.f)
+				len = 0.f;
+		}
+		len /= FRACUNIT;
+		len = clamp<double>(len - (double)fullpulldistance, 0, len);
+		points = (1.f - len * pulldistancefloat);
+		if (thing == pullsource)
+		{
+			points = points * splashfactor;
+		}
+		points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(double)FRACUNIT;
+
+		if (P_CheckSight (thing, pullspot, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
+		{
+			// This is where the real difference between P_RadiusAttack and P_RadiusPull comes in.
+			double velz;
+			double thrust;
+			if (!(thing->flags & MF_ICECORPSE))
+			{
+				thrust = points * 0.5f / (double)thing->Mass;
+							
+				if (pullsource == thing)
+				{
+					thrust *= selfthrustscale;
+				}
+				velz = (double)(thing->z + (thing->height>>1) - pullspot->z) * thrust;
+				if (pullsource != thing)
+				{
+					velz *= 0.5f;
+				}
+				else
+				{
+					velz *= 0.8f;
+				}
+
+				FVector3 pullvec;
+
+				pullvec.X = float(pullspot->x - thing->x);
+				pullvec.Y = float(pullspot->y - thing->y);
+				pullvec.Z = float(pullspot->z - thing->z);
+
+				pullvec.MakeUnit();
+				pullvec *= float((pullforce*FRACUNIT) / (thing->Mass ? thing->Mass : 1));
+
+				//Do not pull in player that has noclip active.
+				if(thing->flags & MF_NOCLIP) continue;
+
+				//Do not pull actors if at least one of these flags isn't defined
+				if ((RPF_AFFECTSOURCE & flags) && (thing == pullsource || thing == pullspot)
+					|| ((RPF_AFFECTENEMY & flags) && (thing->flags3 & MF3_ISMONSTER))
+					|| ((RPF_AFFECTELSE & flags) && !(thing->flags3 & MF3_ISMONSTER))
+					)
+				{
+					thing->velx += fixed_t (pullvec.X);
+					thing->vely += fixed_t (pullvec.Y);
+					thing->velz += fixed_t (pullvec.Z);
+				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
