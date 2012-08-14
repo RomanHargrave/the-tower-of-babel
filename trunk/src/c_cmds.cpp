@@ -952,9 +952,16 @@ CCMD(thaw)
 //-----------------------------------------------------------------------------
 CCMD(nextmap)
 {
-	char * next=NULL;
+	if (netgame)
+	{
+		Printf ("Use "TEXTCOLOR_BOLD"changemap"TEXTCOLOR_NORMAL" instead. "TEXTCOLOR_BOLD"Nextmap"
+				TEXTCOLOR_NORMAL" is for single-player only.\n");
+		return;
+	}
+	char *next = NULL;
 	
-	if (*level.nextmap) next = level.nextmap;
+	if (*level.nextmap)
+		next = level.nextmap;
 
 	if (next != NULL && strncmp(next, "enDSeQ", 6))
 	{
@@ -973,9 +980,16 @@ CCMD(nextmap)
 //-----------------------------------------------------------------------------
 CCMD(nextsecret)
 {
-	char * next=NULL;
+	if (netgame)
+	{
+		Printf ("Use "TEXTCOLOR_BOLD"changemap"TEXTCOLOR_NORMAL" instead. "TEXTCOLOR_BOLD"Nextsecret"
+				TEXTCOLOR_NORMAL" is for single-player only.\n");
+		return;
+	}
+	char *next = NULL;
 	
-	if (*level.secretmap) next = level.secretmap;
+	if (*level.secretmap)
+		next = level.secretmap;
 
 	if (next != NULL && strncmp(next, "enDSeQ", 6))
 	{
