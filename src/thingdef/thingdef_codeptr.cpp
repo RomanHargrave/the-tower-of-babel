@@ -1752,17 +1752,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 //===========================================================================
 enum SIX_Flags
 {
-	SIXF_TRANSFERTRANSLATION=1,
-	SIXF_ABSOLUTEPOSITION=2,
-	SIXF_ABSOLUTEANGLE=4,
-	SIXF_ABSOLUTEVELOCITY=8,
-	SIXF_SETMASTER=16,
-	SIXF_NOCHECKPOSITION=32,
-	SIXF_TELEFRAG=64,
+	SIXF_TRANSFERTRANSLATION=0x1,
+	SIXF_ABSOLUTEPOSITION=0x2,
+	SIXF_ABSOLUTEANGLE=0x4,
+	SIXF_ABSOLUTEVELOCITY=0x8,
+	SIXF_SETMASTER=0x10,
+	SIXF_NOCHECKPOSITION=0x20,
+	SIXF_TELEFRAG=0x40,
 	// 128 is used by Skulltag!
-	SIXF_TRANSFERAMBUSHFLAG=256,
-	SIXF_TRANSFERPITCH=512,
-	SIXF_TRANSFERPOINTERS=1024,
+	SIXF_TRANSFERAMBUSHFLAG=0x100,
+	SIXF_TRANSFERPITCH=0x200,
+	SIXF_TRANSFERPOINTERS=0x400,
+	// Transfer flags
+	SIXF_TRANSFERARGS=0x800,
+	SIXF_TRANSFERSPECIAL=0x1000,
+	SIXF_TRANSFERTID=0x2000,
+	SIXF_TRANSFERSFLAGS=0x4000,
 };
 
 
@@ -1835,6 +1840,22 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 			// If this is a missile or something else set the target to the originator
 			mo->target=originator? originator : self;
 		}
+		if (flags & SIXF_TRANSFERARGS)
+		{
+			mo->args[0] = self->args[0];
+			mo->args[1] = self->args[1];
+			mo->args[2] = self->args[2];
+			mo->args[3] = self->args[3];
+			mo->args[4] = self->args[4];
+		}
+
+		if (flags & SIXF_TRANSFERSPECIAL)
+		{
+			mo->special = self->special;
+			mo->special1 = self->special1;
+			mo->special2 = self->special2;
+		}
+		if (flags & SIXF_TRANSFERSFLAGS) mo->SpawnFlags = self->SpawnFlags;
 	}
 	return true;
 }
