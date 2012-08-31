@@ -145,6 +145,7 @@ public:
 	virtual void Touch (AActor *toucher);
 	virtual void Serialize (FArchive &arc);
 
+	virtual void MarkPrecacheSounds() const;
 	virtual void BeginPlay ();
 	virtual void Destroy ();
 	virtual void Tick ();
@@ -278,6 +279,7 @@ public:
 
 	bool bAltFire;	// Set when this weapon's alternate fire is used.
 
+	virtual void MarkPrecacheSounds() const;
 	virtual void Serialize (FArchive &arc);
 	virtual bool ShouldStay ();
 	virtual void AttachToOwner (AActor *other);
