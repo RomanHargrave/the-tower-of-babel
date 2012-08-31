@@ -483,8 +483,15 @@ void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 void	P_AimCamera (AActor *t1, fixed_t &x, fixed_t &y, fixed_t &z, sector_t *&sec);
 
 // [RH] Means of death
+enum
+{
+	RADF_HURTSOURCE = 1,
+	RADF_NOIMPACTDAMAGE = 2,
+	RADF_SOURCEISSPOT = 4,
+	RADF_NODAMAGE = 8,
+};
 void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
-						FName damageType, bool hurtSelf, bool dodamage=true, int fulldamagedistance=0, bool noimpactdamage=false);
+						FName damageType, int flags, int fulldamagedistance=0);
 
 // [RC] Suction function.
 void	P_RadiusPull (AActor *pullspot, AActor *pullsource, int pullforce, int pulldistance,
