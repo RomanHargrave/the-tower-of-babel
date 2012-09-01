@@ -4579,8 +4579,8 @@ void P_RadiusPull (AActor *pullspot, AActor *pullsource, int pullforce, int pull
 					{
 						if (thing->x == pullspot->x ||
 							thing->y == pullspot->y ||
-							thing->z == pullspot->z) thing->flags &= ~MF_NOGRAVITY;
-						else thing->flags |= MF_NOGRAVITY;
+							thing->z == pullspot->z) thing->flags |= MF_NOGRAVITY;
+						else thing->flags &= ~MF_NOGRAVITY;
 					}
 					thing->velx += fixed_t (pullvec.X);
 					thing->vely += fixed_t (pullvec.Y);
