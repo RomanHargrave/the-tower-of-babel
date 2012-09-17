@@ -613,6 +613,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 // State jump function
 //
 //==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetOutsideMeleeRange)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_STATE(jump, 0);
+
+	if (!self->CheckMeleeRange())
+	{
+		ACTION_JUMP(jump);
+	}
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+}
+
+//==========================================================================
+//
+// State jump function
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_STATE(jump, 0);
+
+	if (self->CheckMeleeRange())
+	{
+		ACTION_JUMP(jump);
+	}
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+}
+//==========================================================================
+//
+// State jump function
+//
+//==========================================================================
 void DoJumpIfCloser(AActor *target, DECLARE_PARAMINFO)
 {
 	ACTION_PARAM_START(2);
@@ -784,19 +817,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 
 //==========================================================================
 //
-// A_RadiusThrust
-//
-//==========================================================================
-
-enum
-{
-	RTF_AFFECTSOURCE = 1,
-	RTF_NOIMPACTDAMAGE = 2,
-	RTF_NOTMISSILE = 4,
-};
-
-//==========================================================================
-//
 // A_RadiusPull
 //
 //==========================================================================
@@ -875,6 +895,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PullActor)
 // A_RadiusThrust
 //
 //==========================================================================
+enum
+{
+	RTF_AFFECTSOURCE = 1,
+	RTF_NOIMPACTDAMAGE = 2,
+	RTF_NOTMISSILE = 4,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 {
 	ACTION_PARAM_START(3);
@@ -3038,7 +3065,11 @@ enum CR_flags
 	CRF_IGNOREGHOST = 0x8000,
 	
 	CRF_MUSTBESOLID = 0x10000,
-	CRF_BEYONDTARGET = 0x20000
+	CRF_BEYONDTARGET = 0x20000,
+
+	CRF_FROMBASE = 0x40000,
+	CRF_MUL_HEIGHT = 0x80000,
+	CRF_MUL_WIDTH = 0x100000
 };
 
 struct UnmanagedActorLink
@@ -3089,9 +3120,42 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRay)
 		
 		target = COPY_AAPTR(self, ptr_target == AAPTR_DEFAULT ? AAPTR_TARGET|AAPTR_PLAYER_GETTARGET|AAPTR_NULL : ptr_target); // no player-support by default
 
+		if (flags & CRF_MUL_HEIGHT)
+		{
+			if (self->player != NULL)
+			{
+				// Synced with hitscan: self->player->mo->height is strangely conscientious about getting the right actor for player
+				offsetheight = FixedMul(offsetheight, FixedMul (self->player->mo->height, self->player->crouchfactor));
+			}
+			else
+			{
+				offsetheight = FixedMul(offsetheight, self->height);
+			}
+		}
+		if (flags & CRF_MUL_WIDTH)
+		{
+			offsetwidth = FixedMul(self->radius, offsetwidth);
+		}
+		
 		x1 = self->x;
 		y1 = self->y;
 		z1 = self->z + offsetheight - self->floorclip;
+
+		if (!(flags & CRF_FROMBASE))
+		{
+			// default to hitscan origin
+
+			// Synced with hitscan: self->height is strangely NON-conscientious about getting the right actor for player
+			z1 += (self->height>>1);
+			if (self->player != NULL)
+			{
+				z1 += FixedMul (self->player->mo->AttackZOffset, self->player->crouchfactor);
+			}
+			else
+			{
+				z1 += 8*FRACUNIT;
+			}
+		}
 
 		if (target)
 		{
