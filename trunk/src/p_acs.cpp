@@ -92,6 +92,7 @@ FRandom pr_acs ("ACS");
 #define HUDMSG_LOG					(0x80000000)
 #define HUDMSG_COLORSTRING			(0x40000000)
 #define HUDMSG_ADDBLEND				(0x20000000)
+#define HUDMSG_ALPHA				(0x10000000)
 
 // HUD message layers; these are not flags
 #define HUDMSG_LAYER_SHIFT			12
@@ -3439,6 +3440,9 @@ enum EACSFunctions
 	ACSF_ACS_NamedExecuteAlways,
 	ACSF_UniqueTID,
 	ACSF_IsTIDUsed,
+	ACSF_Sqrt,
+	ACSF_FixedSqrt,
+	ACSF_VectorLength,
 	ACSF_SpawnProjectileEx,
 
 	// ZDaemon
@@ -3968,6 +3972,16 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return P_IsTIDUsed(args[0]);
 			break;
 
+		case ACSF_Sqrt:
+			return xs_FloorToInt(sqrt(double(args[0])));
+
+		case ACSF_FixedSqrt:
+			return FLOAT2FIXED(sqrt(FIXED2DBL(args[0])));
+
+		case ACSF_VectorLength:
+			return FLOAT2FIXED(TVector2<double>(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());
+
+
 		case ACSF_SpawnProjectileEx:
 			{
 			int spX = args[3]<<FRACBITS;
@@ -3978,6 +3992,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 				spX,spY,spZ, args[6]<<(FRACBITS-3), args[7]<<(FRACBITS-3), 0, NULL, args[8], args[9], false);
 			}
 			break;
+
 
 		default:
 			break;
@@ -5802,7 +5817,10 @@ scriptwait:
 						break;
 					}
 					msg->SetVisibility((type & HUDMSG_VISIBILITY_MASK) >> HUDMSG_VISIBILITY_SHIFT);
-					msg->SetAlpha(alpha);
+					if (type & HUDMSG_ALPHA)
+					{
+						msg->SetAlpha(alpha);
+					}
 					if (type & HUDMSG_ADDBLEND)
 					{
 						msg->SetRenderStyle(STYLE_Add);
@@ -6606,6 +6624,25 @@ scriptwait:
 
 				if (translation != NULL)
 					translation->AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
+			}
+			break;
+
+		case PCD_TRANSLATIONRANGE3:
+			{ // translation using desaturation
+				int start = STACK(8);
+				int end = STACK(7);
+				fixed_t r1 = STACK(6);
+				fixed_t g1 = STACK(5);
+				fixed_t b1 = STACK(4);
+				fixed_t r2 = STACK(3);
+				fixed_t g2 = STACK(2);
+				fixed_t b2 = STACK(1);
+				sp -= 8;
+
+				if (translation != NULL)
+					translation->AddDesaturation(start, end,
+						FIXED2DBL(r1), FIXED2DBL(g1), FIXED2DBL(b1),
+						FIXED2DBL(r2), FIXED2DBL(g2), FIXED2DBL(b2));
 			}
 			break;
 
