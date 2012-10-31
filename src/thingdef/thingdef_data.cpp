@@ -301,6 +301,7 @@ static FFlagDef InventoryFlags[] =
 	DEFINE_FLAG(IF, PERSISTENTPOWER, AInventory, ItemFlags),
 
 	DEFINE_FLAG(IF, RESTRICTABSOLUTELY, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, NEVERRESPAWN, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, NOAUTOAIM, AInventory, ItemFlags),
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
