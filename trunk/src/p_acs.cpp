@@ -2995,6 +2995,26 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->damagetaken = value;
 		break;
 
+	case APROP_TargetTID:
+		actor->target->tid = value;
+		break;
+
+	case APROP_TracerTID:
+		actor->tracer->tid = value;
+		break;
+
+	case APROP_PainChance:
+		actor->PainChance = value;
+		break;
+	
+	case APROP_Height:
+		actor->height = value;
+		break;
+
+	case APROP_Radius:
+		actor->radius = value;
+		break;
+
 	case APROP_GunOffsetX:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 			for (int sprites = 0; sprites < NUMPSPRITES; sprites++)
@@ -3011,26 +3031,6 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 				static_cast<APlayerPawn *>(actor)->player->psprites[sprites].sy = value;
 			}
 			//static_cast<APlayerPawn *>(actor)->player->psprites[ps_weapon].sy = value;
-		break;
-
-	case APROP_Radius:
-		actor->radius = value;
-		break;
-	
-	case APROP_Height:
-		actor->height = value;
-		break;
-
-	case APROP_TargetTID:
-		actor->target->tid = value;
-		break;
-
-	case APROP_TracerTID:
-		actor->tracer->tid = value;
-		break;
-
-	case APROP_PainChance:
-		actor->PainChance = value;
 		break;
 
 	default:

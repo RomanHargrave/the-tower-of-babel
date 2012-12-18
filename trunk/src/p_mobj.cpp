@@ -202,6 +202,7 @@ void AActor::Serialize (FArchive &arc)
 		<< flags4
 		<< flags5
 		<< flags6
+		<< flags7
 		<< special1
 		<< special2
 		<< health

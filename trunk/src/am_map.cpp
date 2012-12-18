@@ -2339,6 +2339,7 @@ void AM_drawThings ()
 			p.y = t->y >> FRACTOMAPBITS;
 			angle = t->angle;
 
+
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				AM_rotatePoint (&p.x, &p.y);
@@ -2348,6 +2349,8 @@ void AM_drawThings ()
 			color = ThingColor;
 
 			// use separate colors for special thing types
+			if (!(t->flags7&MF7_NOTONAUTOMAP))
+			{
 			if (t->flags3&MF3_ISMONSTER && !(t->flags&MF_CORPSE))
 			{
 				if (t->flags & MF_FRIENDLY || !(t->flags & MF_COUNTKILL)) color = ThingColor_Friend;
@@ -2404,6 +2407,7 @@ void AM_drawThings ()
 				};
 
 				AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, angle - t->angle, color, p.x, p.y);
+			}
 			}
 			t = t->snext;
 		}

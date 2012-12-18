@@ -333,6 +333,11 @@ enum
 	MF6_NOTAUTOAIMED	= 0x20000000,	// Do not subject actor to player autoaim.
 	MF6_RELATIVETOFLOOR	= 0x40000000,	// [RC] Make flying actors be affected by lifts.
 	MF6_NOBLASTDAMAGE	= 0x80000000,	// [RC] Actors don't get impact damage from blasts.
+
+// --- mobj.flags7 ---
+
+	MF7_NOTONAUTOMAP	= 0x00000001,	// [RC] Do not, under any circumstance, show on map.
+
 // --- mobj.renderflags ---
 
 	RF_XFLIP			= 0x0001,	// Flip sprite horizontally
@@ -840,6 +845,7 @@ public:
 	DWORD			flags4;			// [RH] Even more flags!
 	DWORD			flags5;			// OMG! We need another one.
 	DWORD			flags6;			// Shit! Where did all the flags go?
+	DWORD			flags7;			// [RC] FLAGS!
 
 	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
 	DWORD			VisibleToTeam;
