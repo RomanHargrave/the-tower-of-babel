@@ -456,6 +456,9 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	// If this thing is in a map section that's not in view it can't possible be visible
 	if (!(currentmapsection[thing->subsector->mapsection>>3] & (1 << (thing->subsector->mapsection & 7)))) return;
 
+	// [BB] If the actor is supposed to be invisible to the player, skip it here.
+	if (thing->IsVisibleToPlayer() == false) return;
+
 	// [RH] Interpolate the sprite's position to make it look smooth
 	fixed_t thingx = thing->PrevX + FixedMul (r_TicFrac, thing->x - thing->PrevX);
 	fixed_t thingy = thing->PrevY + FixedMul (r_TicFrac, thing->y - thing->PrevY);
