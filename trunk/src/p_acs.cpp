@@ -4076,20 +4076,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			break;
 
 		case ACSF_GetWeapon:
-			/*{
-				AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL);
-				FString wpcls = a->player->ReadyWeapon->GetClass()->TypeName;
-				Printf("Current weapon typename is=%s",a->player->ReadyWeapon->GetClass()->TypeName.GetChars());
-				return ACS_StringsOnTheFly.Push(wpcls) | ACSSTRING_OR_ONTHEFLY;
-			}
-						if (pcd == PCD_ENDLOG)
 			{
-				Printf ("%s\n", work.GetChars());
-				STRINGBUILDER_FINISH(work);
-			}*/
-			{
-				FString work2 = "FUCK SHIT STACK";
-				return ACS_StringsOnTheFly.Push("FUCK SHIT STACK") | ACSSTRING_OR_ONTHEFLY;
+				FString wpcls = activator->player->ReadyWeapon->GetClass()->TypeName;
+				return ACS_StringsOnTheFly.Push(wpcls.GetChars()) | ACSSTRING_OR_ONTHEFLY;
 			}
 			break;
 
