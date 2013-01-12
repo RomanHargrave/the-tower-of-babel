@@ -1672,24 +1672,26 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 				continue;
 		}
 
-		// [RC] Well, let's let special monsters with this flag active be able to see
-		// the player then, eh?
-		if(!(actor->flags6 & MF6_SEEINVISIBLE)) 
+		if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
+			player->mo->flags3 & MF3_GHOST)
 		{
-			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
-				player->mo->flags3 & MF3_GHOST)
+			if ((P_AproxDistance (player->mo->x - actor->x,
+					player->mo->y - actor->y) > 2*MELEERANGE)
+				&& P_AproxDistance (player->mo->velx, player->mo->vely)
+				< 5*FRACUNIT)
+			{ // Player is sneaking - can't detect
+				return false;
+			}
+			if (pr_lookforplayers() < 225)
+			{ // Player isn't sneaking, but still didn't detect
+				return false;
+			}
+
+			// [RC] Monsters with this flag can see the player 100%, no matter what.
+			if(actor->flags6 & MF6_SEEINVISIBLE)
 			{
-				if ((P_AproxDistance (player->mo->x - actor->x,
-						player->mo->y - actor->y) > 2*MELEERANGE)
-					&& P_AproxDistance (player->mo->velx, player->mo->vely)
-					< 5*FRACUNIT)
-				{ // Player is sneaking - can't detect
-					return false;
-				}
-				if (pr_lookforplayers() < 225)
-				{ // Player isn't sneaking, but still didn't detect
-					return false;
-				}
+				actor->target = player->mo;
+				return true;
 			}
 		}
 

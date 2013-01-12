@@ -316,8 +316,8 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 	{
 		int damage = pr_camelee.HitDice(MeleeDamage);
 		if (MeleeSound) S_Sound (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 	}
 	else if (domissile && MissileType != NULL)
 	{
@@ -1194,8 +1194,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMeleeAttack)
 	if (self->CheckMeleeRange ())
 	{
 		if (MeleeSound) S_Sound (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
-		P_DamageMobj (self->target, self, self, damage, DamageType);
-		if (bleed) P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, DamageType);
+		if (bleed) P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 	}
 	else
 	{
@@ -1226,8 +1226,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 	{
 		if (DamageType==NAME_None) DamageType = NAME_Melee;	// Melee is the default type
 		if (MeleeSound) S_Sound (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
-		P_DamageMobj (self->target, self, self, damage, DamageType);
-		if (bleed) P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, DamageType);
+		if (bleed) P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 	}
 	else if (ti) 
 	{
@@ -1805,6 +1805,7 @@ enum SIX_Flags
 	SIXF_TRANSFERSPECIAL=0x1000,
 	SIXF_TRANSFERTID=0x2000,
 	SIXF_TRANSFERSFLAGS=0x4000,
+	SIXF_TRANSFERHEALTH=0x8000,
 };
 
 
@@ -1852,6 +1853,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 					// If this is a monster transfer all friendliness information
 					mo->CopyFriendliness(originator, true);
 					if (flags&SIXF_SETMASTER) mo->master = originator;	// don't let it attack you (optional)!
+					if (flags & SIXF_TRANSFERHEALTH) mo->health = originator->health;
 				}
 				else if (originator->player)
 				{
@@ -3345,7 +3347,8 @@ enum JLOS_flags
 	JLOSF_TARGETLOS=128,
 	JLOSF_FLIPFOV=256,
 	JLOSF_ALLYNOJUMP=512,
-	JLOSF_COMBATANTONLY=1024
+	JLOSF_COMBATANTONLY=1024,
+	JLOSF_NOAUTOAIM=2048,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
@@ -3391,7 +3394,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	else
 	{
 		// Does the player aim at something that can be shot?
-		P_BulletSlope(self, &target);
+		P_AimLineAttack(self, self->angle, MISSILERANGE, &target, (flags & JLOSF_NOAUTOAIM) ? ANGLE_1/2 : 0);
 		
 		if (!target) return;
 
@@ -4531,11 +4534,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			damage >>= 2;
 		if (damage)
 		{
-			P_DamageMobj(self->target, self, self, damage, mod, DMG_THRUSTLESS);
+			int newdam = P_DamageMobj(self->target, self, self, damage, mod, DMG_THRUSTLESS);
 			if (spawnblood)
 			{
-				P_SpawnBlood(dx, dy, dz, angle, damage, self->target);
-				P_TraceBleed(damage, self->target, R_PointToAngle2(self->x, self->y, dx, dy), 0);
+				P_SpawnBlood(dx, dy, dz, angle, newdam > 0 ? newdam : damage, self->target);
+				P_TraceBleed(newdam > 0 ? newdam : damage, self->target, R_PointToAngle2(self->x, self->y, dx, dy), 0);
 			}
 		}
 	}
