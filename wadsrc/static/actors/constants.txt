@@ -58,6 +58,7 @@ enum
 	SXF_TRANSFERSPECIAL=0x1000,
 	SXF_TRANSFERTID=0x2000,
 	SXF_TRANSFERSFLAGS=0x4000,
+	SXF_TRANSFERHEALTH=0x8000,
 };
 
 // Flags for A_Chase
@@ -92,6 +93,7 @@ const int JLOSF_TARGETLOS = 128;
 const int JLOSF_FLIPFOV = 256;
 const int JLOSF_ALLYNOJUMP = 512;
 const int JLOSF_COMBATANTONLY = 1024;
+const int JLOSF_NOAUTOAIM = 2048;
 
 // Flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;

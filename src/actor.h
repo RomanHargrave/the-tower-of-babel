@@ -368,6 +368,8 @@ enum
 
 	RF_FORCEYBILLBOARD		= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)
 	RF_FORCEXYBILLBOARD		= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)
+	RF_FORCEXBILLBOARD		= 0x30000,	// [RC] OpenGL only: draw with x axis billboard, i.e. flat (overrides gl_billboard_mode setting)
+	RF_FLOORBILLBOARD		= 0x40000,  // [RC] OpenGL only: draw with z billboard, i.e. floor aligned (overrides gl_billboard_mode setting)?
 
 // --- dummies for unknown/unimplemented Strife flags ---
 

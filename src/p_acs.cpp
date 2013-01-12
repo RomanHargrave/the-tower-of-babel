@@ -3517,6 +3517,8 @@ enum EACSFunctions
 	ACSF_SetHUDWrapWidth,
 	ACSF_SpawnProjectileEx,
 	ACSF_GetWeapon,
+	ACSF_CrashZDoom,
+	ACSF_FatalCrashZDoom,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4079,6 +4081,20 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			{
 				FString wpcls = activator->player->ReadyWeapon->GetClass()->TypeName;
 				return ACS_StringsOnTheFly.Push(wpcls.GetChars()) | ACSSTRING_OR_ONTHEFLY;
+			}
+			break;
+		
+		case ACSF_CrashZDoom:
+			{
+				const char *textcopy = FBehavior::StaticLookupString(args[0]);
+				I_Error ("%s", textcopy);
+			}
+			break;
+
+		case ACSF_FatalCrashZDoom:
+			{
+				const char *textcopy = FBehavior::StaticLookupString(args[0]);
+				I_FatalError ("%s", textcopy);
 			}
 			break;
 
