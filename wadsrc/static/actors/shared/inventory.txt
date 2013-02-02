@@ -315,6 +315,11 @@ ACTOR PowerInfiniteAmmo : Powerup native
 	Powerup.Duration -30
 }
 
+ACTOR PowerReflect : Powerup native
+{
+	Powerup.Duration -30
+}
+
 ACTOR MapRevealer : Inventory native {}
 
 ACTOR PuzzleItem : Inventory native 

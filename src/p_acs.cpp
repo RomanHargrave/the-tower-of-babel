@@ -3517,8 +3517,9 @@ enum EACSFunctions
 	ACSF_SetHUDWrapWidth,
 	ACSF_SpawnProjectileEx,
 	ACSF_GetWeapon,
-	ACSF_CrashZDoom,
-	ACSF_FatalCrashZDoom,
+	ACSF_Error,
+	ACSF_ErrorFatal,
+	ACSF_LineAttack=60,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4071,7 +4072,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			int spX = args[3]<<FRACBITS;
 			int spY = args[4]<<FRACBITS;
 			int spZ = args[5]<<FRACBITS;
-			// Same, but takes an actor name instead of a spawn ID.
+			//[RC] Expanded SpawnProjectile without unusual behavior.
 			P_Thing_ProjectileEx (args[0], activator, 0, FBehavior::StaticLookupString (args[1]), ((angle_t)(args[2]<<24)),
 				spX,spY,spZ, args[6]<<(FRACBITS-3), args[7]<<(FRACBITS-3), 0, NULL, args[8], args[9], false);
 			}
@@ -4084,17 +4085,35 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			}
 			break;
 		
-		case ACSF_CrashZDoom:
+		case ACSF_Error:
 			{
 				const char *textcopy = FBehavior::StaticLookupString(args[0]);
 				I_Error ("%s", textcopy);
 			}
 			break;
 
-		case ACSF_FatalCrashZDoom:
+		case ACSF_ErrorFatal:
 			{
 				const char *textcopy = FBehavior::StaticLookupString(args[0]);
 				I_FatalError ("%s", textcopy);
+			}
+			break;
+
+		//[RC] A bullet firing function for ACS. Thanks to DavidPH.
+		case ACSF_LineAttack:
+			{
+				AActor *source = SingleActorFromTID(args[0], activator);
+
+				if (!source) return 0;
+
+				fixed_t	angle		= args[1] << FRACBITS;
+				fixed_t	pitch		= args[2] << FRACBITS;
+				int	damage			= args[3];
+				FName pufftype		= argCount > 4 && args[4]? FName(FBehavior::StaticLookupString(args[4])) : NAME_BulletPuff;
+				FName damagetype	= argCount > 5 && args[5]? FName(FBehavior::StaticLookupString(args[5])) : NAME_None;
+				fixed_t	range		= argCount > 6 && args[6]? args[6] : 0x7FFFFFFF;
+
+				P_LineAttack(source, angle, range, pitch, damage, damagetype, pufftype);
 			}
 			break;
 

@@ -265,11 +265,12 @@ void GLSprite::Draw(int pass)
 			float ycenter = (y1+y2)*0.5;
 			float zcenter = (z1+z2)*0.5;
 			float angleRad = DEG2RAD(270.);
+			float aAngle = actor->angle;
 			
 			Matrix3x4 mat;
 			mat.MakeIdentity();
 			mat.Translate( xcenter, zcenter, ycenter);
-			mat.Rotate(0, -sin(-angleRad), 0, -GLRenderer->mAngles.Yaw);
+			mat.Rotate(0, sin(angleRad), 0, -GLRenderer->mAngles.Yaw);
 			mat.Translate( -xcenter, -zcenter, -ycenter);
 			Vector v1 = mat * Vector(x2,z1,y1);
 			Vector v2 = mat * Vector(x1,z1,y2);
@@ -485,7 +486,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		return;
 	}
 
-	unsigned spritenum = thing->sprite;
+	int spritenum = thing->sprite;
 	fixed_t spritescaleX = thing->scaleX;
 	fixed_t spritescaleY = thing->scaleY;
 	if (thing->player != NULL)

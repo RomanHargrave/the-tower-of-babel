@@ -44,6 +44,8 @@ xx(Body)
 xx(SoundSlot5)
 xx(SoundSlot6)
 xx(SoundSlot7)
+xx(SoundSlot8)
+xx(SoundSlot9)
 
 // Hexen sound sequence names
 xx(Platform)
@@ -221,6 +223,7 @@ xx(Rocket)
 xx(Plasma)
 xx(BFG)
 //xx(Railgun)
+xx(Dagger)
 
 // Damage types
 //xx(Fire)		already defined above
@@ -249,6 +252,9 @@ xx(Hitscan)		// for normal guns and the like
 xx(Extreme)
 xx(MDK)
 xx(Cast) // 'damage type' for the cast call
+
+//[RC] Backported Zandronum damage type.
+xx(Reflection)
 
 // Special names for thingdef_exp.cpp
 xx(Random)

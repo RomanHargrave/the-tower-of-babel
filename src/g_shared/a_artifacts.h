@@ -259,4 +259,12 @@ protected:
 	bool bNoCallUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
 };
 
+class APowerReflect : public APowerup
+{
+	DECLARE_CLASS( APowerReflect, APowerup )
+protected:
+	void InitEffect( );
+	void EndEffect( );
+};
+
 #endif //__A_ARTIFACTS_H__

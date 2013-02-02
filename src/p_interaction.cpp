@@ -280,6 +280,12 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		else
 		{
 			if (mod == NAME_Telefrag) message = GStrings("OB_MPTELEFRAG");
+			//[RC] Back ported from Zandronum.
+			if ( mod == NAME_Reflection )
+			{
+				messagename = "OB_REFLECTION";
+				message = GStrings(messagename);
+			}
 			if (message == NULL)
 			{
 				if (inflictor != NULL)
@@ -1058,6 +1064,24 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	{
 		return -1;
 	}
+	
+	//[RC] Backported from the Zandronum source.
+	if(( target->player ) &&
+		( target->player->cheats & CF_REFLECTION ) &&
+		( source ) &&
+		( mod != NAME_Reflection ))
+	{
+		if ( target != source )
+		{
+			fixed_t *dfval = target->player->dfvalue;
+
+			P_DamageMobj( source, NULL, target, FixedMul(damage, *dfval), NAME_Reflection );
+
+			// Reset means of death flag.
+			MeansOfDeath = mod;
+		}
+	}
+
 	// Push the target unless the source's weapon's kickback is 0.
 	// (i.e. Gauntlets/Chainsaw)
 	if (inflictor && inflictor != target	// [RH] Not if hurting own self
@@ -1520,6 +1544,10 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 //
 // P_PoisonPlayer - Sets up all data concerning poisoning
 //
+// poisoner is the object directly responsible for poisoning the player,
+// such as a missile. source is the actor responsible for creating the
+// poisoner.
+//
 //==========================================================================
 
 bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison)
@@ -1535,7 +1563,7 @@ bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	if (poison > 0)
 	{
 		player->poisoncount += poison;
-		player->poisoner = poisoner;
+		player->poisoner = source;
 		if (poisoner == NULL)
 		{
 			player->poisontype = player->poisonpaintype = NAME_None;

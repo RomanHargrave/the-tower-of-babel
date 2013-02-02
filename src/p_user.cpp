@@ -247,6 +247,7 @@ player_t::player_t()
   ReadyWeapon(0),
   PendingWeapon(0),
   cheats(0),
+  WeaponState(0),
   timefreezer(0),
   refire(0),
   inconsistant(0),
@@ -791,7 +792,7 @@ AWeapon *APlayerPawn::PickNewWeapon (const PClass *ammotype)
 		player->PendingWeapon = best;
 		if (player->ReadyWeapon != NULL)
 		{
-			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetDownState());
+			P_DropWeapon(player);
 		}
 		else if (player->PendingWeapon != WP_NOCHANGE)
 		{
@@ -1488,7 +1489,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 //
 //===========================================================================
 
-void P_CheckPlayerSprite(AActor *actor, unsigned &spritenum, fixed_t &scalex, fixed_t &scaley)
+void P_CheckPlayerSprite(AActor *actor, int &spritenum, fixed_t &scalex, fixed_t &scaley)
 {
 	player_t *player = actor->player;
 	int crouchspriteno;
@@ -2669,6 +2670,16 @@ void player_t::Serialize (FArchive &arc)
 			mo->accuracy = oldaccuracy;
 			mo->stamina = oldstamina;
 		}
+	}
+	if (SaveVersion < 4041)
+	{
+		// Move weapon state flags from cheats and into WeaponState.
+		WeaponState = ((cheats >> 14) & 1) | ((cheats & (0x37 << 24)) >> (24 - 1));
+		cheats &= ~((1 << 14) | (0x37 << 24));
+	}
+	else
+	{
+		arc << WeaponState;
 	}
 	arc << LogText
 		<< ConversationNPC
