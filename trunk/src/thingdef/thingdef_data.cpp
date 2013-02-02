@@ -245,7 +245,6 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(RF, FORCEYBILLBOARD, AActor, renderflags),
 	DEFINE_FLAG(RF, FORCEXYBILLBOARD, AActor, renderflags),
 	DEFINE_FLAG(RF, FORCEXBILLBOARD, AActor, renderflags),
-	DEFINE_FLAG(RF, FLOORBILLBOARD, AActor, renderflags),
 
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),
@@ -436,7 +435,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 //
 //==========================================================================
 
-const char *GetFlagName(int flagnum, int flagoffset)
+const char *GetFlagName(unsigned int flagnum, int flagoffset)
 {
 	for(unsigned i = 0; i < countof(ActorFlags); i++)
 	{

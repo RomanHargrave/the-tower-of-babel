@@ -1890,3 +1890,53 @@ void APowerInfiniteAmmo::EndEffect( )
 	}
 }
 
+// Reflection Powerup -----------------------------------------------------
+
+IMPLEMENT_CLASS(APowerReflect)
+
+//===========================================================================
+//
+// APowerReflect :: InitEffect
+//
+//===========================================================================
+
+void APowerReflect::InitEffect( )
+{
+	Super::InitEffect();
+
+	if (Owner== NULL || Owner->player == NULL)
+		return;
+
+	FName damageType;
+
+	// Get Damagetype and Damagefactor information here.
+	fixed_t *pdf = NULL;
+	DmgFactors *df = GetClass()->ActorInfo->DamageFactors;
+
+	if (df != NULL && df->CountUsed() != 0){
+		pdf = df->CheckFactor(damageType);
+
+		//[RC] Store it in a player owned field. Can be more than one factor at any given moment.
+		Owner->player->dfvalue = pdf;
+	}
+	Owner->player->cheats |= CF_REFLECTION;
+}
+
+//===========================================================================
+//
+// APowerReflect :: EndEffect
+//
+//===========================================================================
+
+void APowerReflect::EndEffect( )
+{
+	Super::EndEffect();
+
+	// Nothing to do if there's no owner.
+	if (Owner != NULL && Owner->player != NULL)
+	{
+		// Take away the reflection ability.
+		Owner->player->cheats &= ~CF_REFLECTION;
+	}
+}
+

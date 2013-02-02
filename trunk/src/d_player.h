@@ -195,22 +195,26 @@ typedef enum
 	CF_INSTANTWEAPSWITCH= 1 << 11,		// [RH] Switch weapons instantly
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
-	CF_WEAPONREADY		= 1 << 14,		// [RH] Weapon is in the ready state and can fire its primary attack
 	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
 	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
-	CF_REFLECTION		= 1 << 19,
+	CF_REFLECTION		= 1 << 19,		// [Rc] Player reflects damage back at attacker. Does not absorb.
 	CF_PROSPERITY		= 1 << 20,
 	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
-	CF_WEAPONBOBBING	= 1 << 24,		// [HW] Bob weapon while the player is moving
-	CF_WEAPONREADYALT	= 1 << 25,		// Weapon can fire its secondary attack
-	CF_WEAPONSWITCHOK	= 1 << 26,		// It is okay to switch away from this weapon
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
-	CF_WEAPONRELOADOK   = 1 << 28,      // [XA] Okay to reload this weapon.
-	CF_WEAPONZOOMOK     = 1 << 29,      // [XA] Okay to use weapon zoom function.
 	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
 } cheat_t;
+
+enum
+{
+	WF_WEAPONREADY		= 1 << 0,		// [RH] Weapon is in the ready state and can fire its primary attack
+	WF_WEAPONBOBBING	= 1 << 1,		// [HW] Bob weapon while the player is moving
+	WF_WEAPONREADYALT	= 1 << 2,		// Weapon can fire its secondary attack
+	WF_WEAPONSWITCHOK	= 1 << 3,		// It is okay to switch away from this weapon
+	WF_WEAPONRELOADOK	= 1 << 5,		// [XA] Okay to reload this weapon.
+	WF_WEAPONZOOMOK		= 1 << 6,		// [XA] Okay to use weapon zoom function.
+};	
 
 #define WPIECE1		1
 #define WPIECE2		2
@@ -305,6 +309,7 @@ public:
 	int			lastkilltime;			// [RH] For multikills
 	BYTE		multicount;
 	BYTE		spreecount;				// [RH] Keep track of killing sprees
+	BYTE		WeaponState;
 
 	AWeapon	   *ReadyWeapon;
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
@@ -398,6 +403,9 @@ public:
 	fixed_t crouchoffset;
 	fixed_t crouchviewdelta;
 
+	//[RC] Store damagetype/factor value.
+	fixed_t *dfvalue;
+
 	FWeaponSlots weapons;
 
 	// [CW] I moved these here for multiplayer conversation support.
@@ -427,7 +435,7 @@ extern player_t players[MAXPLAYERS];
 
 FArchive &operator<< (FArchive &arc, player_t *&p);
 
-void P_CheckPlayerSprite(AActor *mo, unsigned &spritenum, fixed_t &scalex, fixed_t &scaley);
+void P_CheckPlayerSprite(AActor *mo, int &spritenum, fixed_t &scalex, fixed_t &scaley);
 
 inline void AActor::SetFriendPlayer(player_t *player)
 {
