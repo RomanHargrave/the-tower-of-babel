@@ -821,7 +821,7 @@ void AActor::CopyFriendliness (AActor *other, bool changeTarget, bool resetHealt
 	LastLookPlayerNumber = other->LastLookPlayerNumber;
 	flags  = (flags & ~MF_FRIENDLY) | (other->flags & MF_FRIENDLY);
 	flags3 = (flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (other->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
-	flags4 = (flags4 & ~MF4_NOHATEPLAYERS) | (other->flags4 & MF4_NOHATEPLAYERS);
+	flags4 = (flags4 & ~(MF4_NOHATEPLAYERS | MF4_BOSSSPAWNED)) | (other->flags4 & (MF4_NOHATEPLAYERS | MF4_BOSSSPAWNED));
 	FriendPlayer = other->FriendPlayer;
 	DesignatedTeam = other->DesignatedTeam;
 	if (changeTarget && other->target != NULL && !(other->target->flags3 & MF3_NOTARGET))
@@ -1498,7 +1498,9 @@ bool AActor::CanSeek(AActor *target) const
 //
 //----------------------------------------------------------------------------
 
-bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise, bool usecurspeed)
+static FRandom pr_seekerchance("SeekerChance");
+
+bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise, bool usecurspeed, int statechance)
 {
 	int dir;
 	int dist;
@@ -1506,6 +1508,10 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	angle_t angle;
 	AActor *target;
 	fixed_t speed;
+
+	if (statechance == NULL){
+		statechance = 256;
+	}
 
 	speed = !usecurspeed ? actor->Speed : xs_CRoundToInt(TVector3<double>(actor->velx, actor->vely, actor->velz).Length());
 	target = actor->tracer;
@@ -1534,10 +1540,20 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	if (dir)
 	{ // Turn clockwise
 		actor->angle += delta;
+		if (statechance > 0 && pr_seekerchance()<statechance){
+			if (actor->TurnState != NULL){
+				actor->SetState(actor->TurnState);
+			}
+		}
 	}
 	else
 	{ // Turn counter clockwise
 		actor->angle -= delta;
+		if (statechance > 0 && pr_seekerchance()<statechance){
+			if (actor->TurnState != NULL){
+				actor->SetState(actor->TurnState);
+			}
+		}
 	}
 	angle = actor->angle>>ANGLETOFINESHIFT;
 	
