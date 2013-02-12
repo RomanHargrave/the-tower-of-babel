@@ -966,6 +966,7 @@ public:
 	FState *SeeState;
 	FState *MeleeState;
 	FState *MissileState;
+	FState *TurnState;
 
 	
 	int ConversationRoot;				// THe root of the current dialogue

@@ -487,18 +487,19 @@ enum
 };
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SeekerMissile)
 {
-	ACTION_PARAM_START(5);
+	ACTION_PARAM_START(6);
 	ACTION_PARAM_INT(ang1, 0);
 	ACTION_PARAM_INT(ang2, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_INT(chance, 3);
 	ACTION_PARAM_INT(distance, 4);
+	ACTION_PARAM_INT(schance, 5);
 
 	if ((flags & SMF_LOOK) && (self->tracer == 0) && (pr_seekermissile()<chance))
 	{
 		self->tracer = P_RoughMonsterSearch (self, distance, true);
 	}
-	if (!P_SeekerMissile(self, clamp<int>(ang1, 0, 90) * ANGLE_1, clamp<int>(ang2, 0, 90) * ANGLE_1, !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
+	if (!P_SeekerMissile(self, clamp<int>(ang1, 0, 90) * ANGLE_1, clamp<int>(ang2, 0, 90) * ANGLE_1, !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED), schance))
 	{
 		if (flags & SMF_LOOK)
 		{ // This monster is no longer seekable, so let us look for another one next time.

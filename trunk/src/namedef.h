@@ -182,6 +182,7 @@ xx(Greetings)
 xx(Idle)
 xx(GenericFreezeDeath)
 xx(GenericCrush)
+xx(Turn)
 
 // Compatible death names for the decorate parser.
 xx(XDeath)
