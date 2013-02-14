@@ -1194,9 +1194,19 @@ void APowerSpeed::DoEffect ()
 	if (P_AproxDistance (Owner->velx, Owner->vely) <= 12*FRACUNIT)
 		return;
 
-	// [RC] Whose fricking idea was to make this not replaceable?
-	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->x, Owner->y, Owner->z, ALLOW_REPLACE);
-	if (speedMo)
+	// [RC] Trail can be replaced, along with being set on or off per speed powerup.
+	AActor *speedMo;
+	switch (Mode)
+	{
+		default:
+		case (NAME_Trail):
+			speedMo = Spawn<APlayerSpeedTrail> (Owner->x, Owner->y, Owner->z, ALLOW_REPLACE);
+			break;
+		case (NAME_None):
+			speedMo = NULL;
+			break;
+	}
+	if (speedMo != NULL)
 	{
 		speedMo->angle = Owner->angle;
 		speedMo->Translation = Owner->Translation;

@@ -31,6 +31,10 @@ xx(Fuzzy)
 xx(Opaque)
 xx(Stencil)
 
+// Speed types
+xx(Trail)
+// None is shared by RenderStyle, so..
+
 // Healingradius types
 xx(Mana)
 xx(Armor)
